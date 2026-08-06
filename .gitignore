@@ -1,0 +1,74 @@
+# Python bytecode and environments
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# Editors and operating-system files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs and temporary files
+*.log
+*.err.log
+*.tmp
+*.temp
+*.bak
+~$*
+
+# Downloaded/raw datasets (large and reproducible)
+/数据集/
+**/raw/
+**/cache/
+**/structured_sources/
+
+# Generated experiment outputs
+/codex-output/
+
+# Local databases and serialized artifacts
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.pkl
+*.pickle
+*.joblib
+
+# Models/checkpoints
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.h5
+
+# Archives and compressed downloads
+*.zip
+*.gz
+*.tgz
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
+# Build/package artifacts
+build/
+dist/
+*.egg-info/
