@@ -1,0 +1,56 @@
+openapi: 3.1.0
+info: {title: AI4S Research Decision Platform, version: 0.1.0}
+paths:
+  /api/v1/health:
+    get: {responses: {'200': {description: Service and evidence status}}}
+  /api/v1/session/login:
+    get: {responses: {'200': {description: Session state and CSRF bootstrap}}}
+    post: {responses: {'200': {description: Authenticated session}, '403': {description: Invalid credentials or CSRF}}}
+  /api/v1/session/logout:
+    post: {responses: {'200': {description: Session ended}, '403': {description: CSRF rejected}}}
+  /api/v1/projects:
+    get:
+      responses: {'200': {description: Projects visible to the current user}, '403': {description: Authentication denied}}
+    post:
+      parameters: [{name: Idempotency-Key, in: header, required: true, schema: {type: string}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expected_revision, name, direction, core_keywords]
+              properties:
+                expected_revision: {type: integer, const: 0}
+                name: {type: string, minLength: 1}
+                direction: {type: string, minLength: 1}
+                core_keywords: {type: array, minItems: 1, items: {type: string}}
+      responses: {'201': {description: Atomic Project, ResearchConstraint v1 draft and WorkflowProjection}, '403': {description: Authentication or CSRF denied}, '409': {description: Idempotency conflict}, '422': {description: Invalid project input}}
+  /api/v1/projects/{project_id}/status:
+    get:
+      parameters: [{name: project_id, in: path, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Authorized project status}, '403': {description: Authentication denied}, '404': {description: Project hidden or absent}}
+  /api/v1/projects/{project_id}/gold/evaluate:
+    post:
+      parameters: [{name: project_id, in: path, required: true, schema: {type: string, format: uuid}}, {name: Idempotency-Key, in: header, required: true, schema: {type: string}}]
+      responses: {'200': {description: Three-state Gold gate result}, '403': {description: Access intersection denied}, '422': {description: Recoverable business blocker}}
+  /api/v1/projects/{project_id}/retrieval/compile:
+    post: {responses: {'200': {description: Versioned AST compilation and gate result}, '409': {description: Revision or idempotency conflict}}}
+  /api/v1/projects/{project_id}/retrieval/manual-runs:
+    post: {responses: {'200': {description: Persisted manual execution record}}}
+  /api/v1/projects/{project_id}/materials/import-summary:
+    post: {responses: {'200': {description: Immutable-file import provenance summary}}}
+  /api/v1/projects/{project_id}/evidence:
+    post: {responses: {'200': {description: Locatable evidence record}}}
+  /api/v1/projects/{project_id}/navigation:
+    get: {responses: {'200': {description: Raw counts and configured-method blockers}}}
+  /api/v1/projects/{project_id}/candidates:
+    post: {responses: {'200': {description: Seven-category candidate gate result}}}
+  /api/v1/projects/{project_id}/decisions:
+    post: {responses: {'200': {description: Version-bound decision package}}}
+  /api/v1/projects/{project_id}/contributions/validate:
+    post: {responses: {'200': {description: Consent, dual-review, overlap and reward result}}}
+  /api/v1/projects/{project_id}/models/status:
+    get: {responses: {'200': {description: Model license, baseline and budget readiness}}}
+  /api/v1/projects/{project_id}/tasks/{task_id}:
+    get: {responses: {'200': {description: Durable task state}, '404': {description: Hidden or absent task}}}

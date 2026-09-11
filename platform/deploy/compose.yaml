@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:17.6-bookworm
+    environment:
+      POSTGRES_DB: ai4s
+      POSTGRES_USER: ai4s
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck: {test: [CMD-SHELL, "pg_isready -U ai4s"], interval: 10s, timeout: 5s, retries: 5}
+  broker:
+    image: rabbitmq:4.3.0-management
+    volumes: [rabbit-data:/var/lib/rabbitmq]
+  api:
+    build: {context: ../backend, dockerfile: Dockerfile}
+    env_file: [{path: .env, required: false}]
+    depends_on: {db: {condition: service_healthy}, broker: {condition: service_started}}
+    volumes: [private-files:/srv/private]
+  worker:
+    build: {context: ../backend, dockerfile: Dockerfile}
+    command: [celery, -A, config.celery, worker, --loglevel=INFO, --concurrency=2]
+    env_file: [{path: .env, required: false}]
+    depends_on: {db: {condition: service_healthy}, broker: {condition: service_started}}
+    volumes: [private-files:/srv/private]
+  web:
+    build: {context: ../frontend, dockerfile: Dockerfile}
+    ports: ["443:8443"]
+    depends_on: [api]
+    secrets:
+      - {source: tls_crt, target: tls.crt}
+      - {source: tls_key, target: tls.key}
+secrets:
+  db_password: {environment: AI4S_DB_PASSWORD}
+  tls_crt: {environment: AI4S_TLS_CERTIFICATE}
+  tls_key: {environment: AI4S_TLS_PRIVATE_KEY}
+volumes: {postgres-data: {}, rabbit-data: {}, private-files: {}}
