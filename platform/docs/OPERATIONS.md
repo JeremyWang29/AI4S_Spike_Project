@@ -1,5 +1,40 @@
 # Operations and recovery
 
+## M0 entry and scope operations (2026-09-14)
+
+M0 persists project membership, fixed scope interviews, candidate decisions, conflict notes and confirmed versions. AI/KG providers remain `UNCONFIGURED`. Legacy retrieval/evidence inputs are exploratory; submitted approvals cannot grant Gold qualification, decision readiness or rewards.
+
+| Role | Project reads | Scope edits | Membership | Account administration |
+|---|---|---|---|---|
+| Owner | Owned projects | Yes | Add researcher/reviewer or remove | No implicit rights |
+| Researcher | Explicit membership | Yes | No | No |
+| Reviewer | Assigned project membership | No; M0 has no formal review actions | No | No |
+| Administrator (`is_staff`) | Only independently owned/member projects | Same project role rules | Same project role rules | Issue invite/reset and revoke sessions |
+
+Files require project and material authorization together. M0 has no material authorization source, so every file request denies. Missing and unauthorized projects return the same 404. Invite redemption activates only an account; an owner must separately add project membership. The administrator UI returns a single-use token for manual delivery; no email is sent. Tokens are stored only as hashes, invitations expire in 24 hours and resets in one hour. Reissuing an inactive invitation invalidates its earlier token. Passwords require 12 characters and Django password validation. Five failed login attempts within 15 minutes block further attempts for the account/address; successful login resets failures. Reset revokes existing sessions. Account/session actions and project mutations record actor, time and object without tokens/passwords.
+
+All project POST commands require `Idempotency-Key` (1–160 characters) and integer `expected_revision`; new projects use zero. Reuse the same key and unchanged payload after uncertain network failure. Changed payload or stale revision gives 409. Scope GET includes the current draft, all immutable confirmed history, four question groups, provider availability and project revision. Scope POST actions are `save`, `confirm`, `edit`. Confirmation validates all eleven answers, years, decisions, duplicate terms, include/exclude overlap, conflict resolution notes and a manual semantic-review note. Existing candidate source/term and conflict descriptions cannot be deleted or rewritten; replacements and explicit decisions are recorded. `edit` clones a confirmed version and invalidates only reachable dependency applicability, preserving old approval content.
+
+Unsaved scope edits are retained per project only in the current page memory when switching steps or projects. Save before refreshing, closing or logging out; successful saves restore from the server in fresh sessions. After a version conflict, local text remains visible for copying and merging before explicitly loading the server version. Account commands carry a project identifier and stable retry key, and known same-project revisions propagate to the scope form.
+
+The account panel exposes member administration, projection rebuild and task lookup/retry. Projection rebuild also has `POST /api/v1/projects/{id}/projection/rebuild`. Missing projections rebuild from authoritative scopes and the complete event stream, recording watermarks and consumer/event deduplication. Failed current-version `projection.rebuild` tasks retry synchronously through accepted/running/succeeded with a new fencing token. Paid, unknown-outcome, superseded and unconfigured tasks are not automatically retried; investigate and reconcile first. M0 does not configure a paid task worker.
+
+## Isolated deployment and migration
+
+Use `platform/deploy/.env.example` as a template in a protected operational directory. Set `AI4S_ENV` to `development`, `acceptance`, `pilot` or `production`, a unique random `AI4S_SECRET_KEY` (at least 32 characters), DB secret, TLS material and allowed host. Broker secrets must use at least 32 random URL-safe letters/digits/underscores/hyphens; the same value is provisioned to RabbitMQ. Do not commit secrets. Nondevelopment rejects missing secrets, DEBUG, SQLite and missing connection/file configuration; it requires HTTPS/secure cookies. The reverse proxy is the only public service and sets the HTTPS header. Do not expose API/worker/database ports directly.
+
+From `platform/deploy`, run `docker compose --env-file <protected-env-file> config --quiet`, then `docker compose --env-file <protected-env-file> up --build -d`. Compose names each stack `ai4s-<environment>` and separates its DB, private-file volume, broker vhost and Celery queue. Give concurrently running environments distinct HTTPS ports, secrets and hosts. Do not override the Compose project name to share volumes.
+
+A single `migrate` service waits for the database and runs migrations. API and worker require its successful completion and refuse startup while migrations are pending. Their executables use `/app/.venv/bin`; the worker command uses `config.celery`. If migration fails, inspect `docker compose ... logs migrate`, fix the cause, rerun the migration service, then start API/worker. Never bypass the dependency or delete database volumes to repair a migration.
+
+Migrations are additive: identity/knowledge tables, dependency edges, actor scoping, plus a backfill of only empty existing scope drafts. Existing confirmed content is preserved; browser previews are never migrated. Before a live operational run, take a database/file backup, stop writes, exercise forward and rollback against an isolated copy, inspect the backfill, then migrate and verify owner access, counts and events before reopening. The backfill reverse intentionally preserves its added metadata; removing new tables can lose M0 data, so restoring the pre-run backup is the rollback for a failed live cutover. This change does not execute a production migration.
+
+For local functional verification, use `platform/backend/.venv/Scripts/python.exe platform/backend/manage.py test platform/tests`, `makemigrations --check --dry-run`, and migrate a fresh temporary `AI4S_DB_NAME`. For PostgreSQL, point the same command at an isolated test database with create-test-database permission using `AI4S_DB_ENGINE=django.db.backends.postgresql` and explicit DB variables. `tests.contracts.test_m0.PostgreSQLConcurrencyTests` runs actual row-lock races; SQLite skips them and is not evidence of PostgreSQL concurrency. Run `npm.cmd --prefix platform/frontend test` and `npm.cmd --prefix platform/frontend run build` separately.
+
+The development-only `create_test_user` command is forbidden outside development. Bootstrap an operational administrator with Django's interactive `createsuperuser` in the authorized deployment run; create invited users from the account panel. No administrator receives private-project membership automatically.
+
+## Later-stage operational requirements
+
 Deletion denies content access immediately. Remote journal acknowledgement is required before acceptance is reported. Online content is purged at the earlier of 30 days or a stricter license deadline; metadata without body text is retained for one year. Restores replay revocations and entitlement corrections before traffic is opened.
 
 Backups must combine PostgreSQL/WAL, immutable-file manifests, and the remote journal watermark. Weekly full and incremental chains may not retain restricted bodies beyond the 30-day ceiling merely to widen restore history. A host-loss drill must show a common restore point, file hashes, license checks, side-effect reconciliation, measured data loss no greater than one hour, and measured recovery no greater than four hours. Until that drill exists, RPO/RTO status is `UNVERIFIED`.

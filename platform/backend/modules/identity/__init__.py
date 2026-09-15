@@ -12,8 +12,8 @@ class AccessFacts:
     content_available: bool
 
     def allows(self, operation: str) -> bool:
-        roles = {"read": {"viewer", "researcher", "owner"}, "write": {"researcher", "owner"}, "approve": {"owner"}}
-        return (self.authenticated and self.project_role in roles[operation] and self.license_valid
+        roles = {"read": {"reviewer", "researcher", "owner"}, "write": {"researcher", "owner"}, "approve": {"owner"}}
+        return (self.authenticated and self.project_role in roles.get(operation, set()) and self.license_valid
                 and self.entitlement_valid and self.purpose_allowed and self.content_available)
 
     def require(self, operation: str):

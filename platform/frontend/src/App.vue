@@ -7,9 +7,12 @@ import LoginPanel from './components/LoginPanel.vue'
 import PreviewBadge from './components/PreviewBadge.vue'
 import ProjectForm from './components/ProjectForm.vue'
 import WorkflowStepper from './components/WorkflowStepper.vue'
+import ScopePanel from './components/ScopePanel.vue'
+import AccountPanel from './components/AccountPanel.vue'
 
 const session=ref({authenticated:false,username:null}),projects=ref([]),selected=ref(null),preview=ref(null),pendingCreate=ref(null)
 const booting=ref(true),busy=ref(false),error=ref(null),showCreate=ref(false),moduleArea=ref('overview'),demoMode=ref(false)
+const showAccount=ref(false),scopeDrafts=ref({})
 const scopeGroups=[
   {title:'对象与机制',fields:[['object','研究对象'],['mechanism','核心机制']]},
   {title:'方法与结局',fields:[['method','方法／干预'],['outcome','主要结局']]},
@@ -36,12 +39,14 @@ const sideBlockers=computed(()=>{
 })
 
 onMounted(async()=>{try{session.value=await api.session();if(session.value.authenticated)await refreshProjects()}catch(e){error.value=e}finally{booting.value=false}})
-watch(preview,value=>{if(value)savePreview(value)},{deep:true})
+watch(preview,value=>{if(value&&selected.value?.demo)savePreview(value)},{deep:true})
+function scopeSaved(result){if(!selected.value||selected.value.demo||result.project_id!==selected.value.id)return;selected.value.revision=result.project_revision;selected.value.scope_version=result.scope.version;selected.value.scope_status=result.scope.status;selected.value.direction=result.scope.direction;projects.value=projects.value.map(project=>project.id===selected.value.id?{...selected.value}:project);preview.value.scope.confirmed=result.scope.status==='confirmed';preview.value.stepStates.scope=result.scope.status==='confirmed'?'complete':'current'}
+function revisionUpdated(result){if(selected.value&&result.project_id===selected.value.id){selected.value.revision=result.project_revision;projects.value=projects.value.map(project=>project.id===selected.value.id?{...selected.value}:project)}}
 
 async function login(values){busy.value=true;error.value=null;try{session.value=await api.login(values.username,values.password);await refreshProjects()}catch(e){error.value=e}finally{busy.value=false}}
-async function logout(){try{await api.logout()}finally{session.value={authenticated:false,username:null};projects.value=[];selected.value=null;preview.value=null;demoMode.value=false}}
+async function logout(){scopeDrafts.value={};try{await api.logout()}finally{session.value={authenticated:false,username:null};projects.value=[];selected.value=null;preview.value=null;demoMode.value=false}}
 async function refreshProjects(){projects.value=(await api.projects()).items;if(projects.value.length)selectProject(projects.value[0])}
-function selectProject(project){selected.value=project;preview.value=loadPreview(project);demoMode.value=Boolean(project.demo);showCreate.value=false}
+function selectProject(project){selected.value={...project,role:project.role||'owner'};preview.value=loadPreview(project);demoMode.value=Boolean(project.demo);showCreate.value=false}
 function loadDemo(){const project=demoProject();demoMode.value=true;session.value={authenticated:false,username:'示例访客'};projects.value=[project];selectProject(project)}
 async function createProject(values){busy.value=true;error.value=null;pendingCreate.value=creationAttempt(pendingCreate.value,values);try{const project=await api.createProject(values,pendingCreate.value.key);pendingCreate.value=null;projects.value=[project,...projects.value.filter(item=>item.id!==project.id)];selectProject(project);preview.value.activeStep=1}catch(e){error.value=e}finally{busy.value=false}}
 function chooseStep(index){preview.value.activeStep=index}
@@ -73,12 +78,13 @@ const percent=value=>`${(Number(value)*100).toFixed(1)}%`
       <div class="brand"><b>AI4S</b><span>Research Decision</span></div>
       <section class="project-switcher"><span class="overline light">PROJECTS</span><button v-for="project in projects" :key="project.id" :class="['project-option',{active:selected?.id===project.id}]" @click="selectProject(project)"><b>{{project.name}}</b><small>{{project.demo?'示例项目':'真实项目 · V'+project.revision}}</small></button><button v-if="session.authenticated" class="new-project" @click="showCreate=true">＋ 新建项目</button></section>
       <nav class="module-nav" aria-label="平台模块"><button v-for="area in stages" :key="area[0]" :class="{active:moduleArea===area[0]}" @click="moduleArea=area[0]">{{area[1]}}</button></nav>
-      <div class="account"><b>{{session.username}}</b><small>{{demoMode?'身份与权限预览':'受邀账号 · 同域会话'}}</small><button v-if="session.authenticated" @click="logout">退出登录</button><button v-else @click="demoMode=false;selected=null;preview=null">退出示例</button></div>
+      <div class="account"><b>{{session.username}}</b><small>{{demoMode?'身份与权限预览':'受邀账号 · 同域会话'}}</small><button v-if="session.authenticated" @click="showAccount=!showAccount">账号与成员／恢复</button><button v-if="session.authenticated" @click="logout">退出登录</button><button v-else @click="demoMode=false;selected=null;preview=null">退出示例</button></div>
     </aside>
 
     <main v-if="selected&&preview" class="main-area">
       <header class="topbar"><div><span class="overline">PROJECT / {{selected.demo?'DEMO':'V'+selected.revision}}</span><h1>{{selected.name}}</h1><p>{{selected.direction}}</p></div><div class="header-actions"><PreviewBadge v-if="selected.demo"/><button class="secondary" @click="resetPreview">清除本次预览</button><button v-if="session.authenticated" class="primary" @click="showCreate=true">＋ 新建项目</button></div></header>
-      <div class="preview-banner"><b>产品流程试开发</b><span>除账号、项目列表和新建项目外，以下产物保存在本标签页，仅用于验证交互。</span></div>
+      <div class="preview-banner"><b>{{selected.demo?'示例流程':'M0 入口与范围'}}</b><span>{{selected.demo?'所有产物仅供交互预览。':'账号、项目和范围版本保存在服务器。后续阶段为交互预览，尚未启用正式业务。'}}</span></div>
+      <AccountPanel v-if="showAccount&&session.authenticated" :key="selected.id" :session="session" :project="selected" @revoked="logout" @updated="revisionUpdated"/>
       <WorkflowStepper :active="activeStep" :states="preview.stepStates" @select="chooseStep"/>
 
       <div class="content-grid">
@@ -92,6 +98,7 @@ const percent=value=>`${(Number(value)*100).toFixed(1)}%`
             <article class="card source-card"><PreviewBadge :label="selected.demo?'示例项目 · 非服务器数据':'真实项目元数据 · 后续步骤为交互预览'"/><h3>下一步：确认研究边界</h3><p>核心关键词只是范围访谈的起点，不会自动成为因果结论或已执行检索式。</p><button class="primary" @click="chooseStep(1)">进入范围与概念 →</button></article>
           </div>
 
+          <ScopePanel v-else-if="currentStep.id==='scope'&&!selected.demo" :key="selected.id" :project="selected" :drafts="scopeDrafts" @saved="scopeSaved"/>
           <div v-else-if="currentStep.id==='scope'" class="panel-stack">
             <article v-for="group in scopeGroups" :key="group.title" class="card"><div class="card-title"><span class="overline">SCOPE INTERVIEW</span><PreviewBadge label="浏览器范围草稿 · 未写入服务器"/></div><h3>{{group.title}}</h3><div class="form-grid"><label v-for="field in group.fields" :key="field[0]">{{field[1]}}<input v-model="preview.scope[field[0]]" @change="updateScope"></label></div></article>
             <article class="card"><div class="card-title"><div><span class="overline">CONCEPT CANDIDATES</span><h3>候选词逐条决定</h3></div><PreviewBadge/></div><div class="suggestion" v-for="item in preview.suggestions" :key="item.id"><div><b>{{item.term}}</b><small>{{item.source}}</small></div><div><button :class="{chosen:item.decision==='accepted'}" @click="setSuggestion(item,'accepted')">接受</button><button :class="{chosen:item.decision==='modified'}" @click="setSuggestion(item,'modified')">修改后接受</button><button :class="{chosen:item.decision==='rejected'}" @click="setSuggestion(item,'rejected')">拒绝</button></div></div><label class="check-line"><input v-model="preview.scope.conflictsResolved" type="checkbox" @change="updateScope"> 已人工检查年份、类型和纳排条件，当前无未处理矛盾</label><div class="card-actions"><span>{{preview.scope.confirmed?'范围已确认；修改会使下游需重新验证。':scopeComplete?'必填范围已完整，请人工确认。':'请补全范围、处理所有候选词并确认无矛盾。'}}</span><button class="primary" :disabled="!scopeComplete" @click="confirmScope">确认范围 V{{(selected.scope_version||1)+(preview.scope.confirmed?1:0)}}</button></div></article>
@@ -133,11 +140,12 @@ const percent=value=>`${(Number(value)*100).toFixed(1)}%`
           </div>
         </section>
 
-        <aside class="context-panel"><span class="overline">CURRENT CONTEXT</span><h3>当前步骤摘要</h3><dl><div><dt>范围版本</dt><dd>V{{selected.scope_version||1}}</dd></div><div><dt>当前产物</dt><dd>{{currentStep.label}}</dd></div><div><dt>保存位置</dt><dd>{{currentStep.id==='project'&&!selected.demo?'服务器':'本标签页预览'}}</dd></div></dl><h4>阻断与恢复</h4><div v-if="sideBlockers.length" class="mini-blocker" v-for="item in sideBlockers" :key="item.code"><b>{{item.message}}</b><small>{{item.recovery}}</small><code>{{item.code}}</code></div><p v-else class="empty-note">本步骤没有已知阻断。</p><details><summary>科研规则详情</summary><p>页面状态是流程投影。正式判断仍由对应范围、平台执行、评估包、语料快照和分析能力对象决定。</p></details></aside>
+        <aside class="context-panel"><span class="overline">CURRENT CONTEXT</span><h3>当前步骤摘要</h3><dl><div><dt>范围版本</dt><dd>V{{selected.scope_version||1}}</dd></div><div><dt>当前产物</dt><dd>{{currentStep.label}}</dd></div><div><dt>保存位置</dt><dd>{{['project','scope'].includes(currentStep.id)&&!selected.demo?'服务器（编辑须保存）':'本标签页预览'}}</dd></div></dl><h4>阻断与恢复</h4><div v-if="sideBlockers.length" class="mini-blocker" v-for="item in sideBlockers" :key="item.code"><b>{{item.message}}</b><small>{{item.recovery}}</small><code>{{item.code}}</code></div><p v-else class="empty-note">本步骤没有已知阻断。</p><details><summary>科研规则详情</summary><p>页面状态是流程投影。正式判断仍由对应范围、平台执行、评估包、语料快照和分析能力对象决定。</p></details></aside>
       </div>
     </main>
 
     <div v-else class="empty-project"><div><span class="overline">NO PROJECT YET</span><h1>从一个研究方向开始</h1><p>创建项目只需要名称、研究方向和至少一个核心关键词。</p><button class="primary" @click="showCreate=true">＋ 新建项目</button><button class="text-button" @click="loadDemo">加载示例流程</button></div></div>
+    <AccountPanel v-if="showAccount&&session.authenticated&&!selected" :session="session" @revoked="logout"/>
     <div v-if="showCreate" class="modal" @click.self="showCreate=false"><ProjectForm :busy="busy" :server-error="error" @submit="createProject" @cancel="showCreate=false"/></div>
   </div>
 </template>

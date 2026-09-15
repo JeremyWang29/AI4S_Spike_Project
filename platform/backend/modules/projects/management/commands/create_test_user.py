@@ -10,6 +10,9 @@ class Command(BaseCommand):
         parser.add_argument("--password", required=True)
 
     def handle(self, *args, **options):
+        from django.conf import settings
+        if settings.AI4S_ENV != "development":
+            raise CommandError("测试账号命令仅允许开发环境")
         if len(options["password"]) < 8:
             raise CommandError("测试密码至少需要8个字符")
         user, created = get_user_model().objects.get_or_create(username=options["username"])

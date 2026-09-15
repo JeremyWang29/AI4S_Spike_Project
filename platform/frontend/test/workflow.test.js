@@ -63,7 +63,7 @@ test('preview storage is project isolated, versioned and safely reset',()=>{
   assert.equal(first.scope.confirmed,false)
   first.scope.object='changed';savePreview(first)
   const second={...realProject,id:'project-2'}
-  assert.equal(loadPreview(realProject).scope.object,'changed')
+  assert.equal(loadPreview(realProject).scope.object,'')
   assert.notEqual(loadPreview(second).scope.object,'changed')
   sessionStorage.setItem(`ai4s-preview-v${PREVIEW_SCHEMA}:project-2`,JSON.stringify({schema:0,projectId:'project-2',bad:true}))
   assert.equal(loadPreview(second).bad,undefined)

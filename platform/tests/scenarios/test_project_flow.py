@@ -19,7 +19,7 @@ class ProjectApiScenarioTests(TestCase):
     def test_independent_dependency_status_s01(self):
         self.client.force_login(self.owner)
         data = self.client.get(f"/api/v1/projects/{self.project.id}/status").json()
-        self.assertEqual(data["dependencies"]["literature"], "qualified")
+        self.assertEqual(data["dependencies"]["literature"], "legacy_unverified")
         self.assertEqual(data["dependencies"]["patent"], "awaiting_manual_return")
     def test_gold_api_exact_boundary(self):
         self.client.force_login(self.owner)
@@ -29,7 +29,7 @@ class ProjectApiScenarioTests(TestCase):
         payload = {"expected_revision": 1, "scope": "literature", "tuning": {"tp": 17, "fp": 3, "fn": 3, "tn": 2},
                    "acceptance": {"tp": 17, "fp": 3, "fn": 3, "tn": 2}, "checks": checks}
         response = self.client.post(f"/api/v1/projects/{self.project.id}/gold/evaluate", payload, content_type="application/json", HTTP_IDEMPOTENCY_KEY="gold-1")
-        self.assertEqual(response.status_code, 200); self.assertTrue(response.json()["qualified"])
+        self.assertEqual(response.status_code, 200); self.assertFalse(response.json()["qualified"]); self.assertTrue(response.json()["exploratory_only"])
 
     def test_gold_cannot_qualify_without_all_formal_checks(self):
         self.client.force_login(self.owner)
@@ -80,11 +80,11 @@ class ProjectApiScenarioTests(TestCase):
              "slice_version": "slice1", "evidence_ids": [evidence["id"]], "primary_search_applicable": True,
              "required_followups_complete": True, "three_checks_complete": True, "expert_reviewed": True, "evidence_sufficient": True},
             content_type="application/json", HTTP_IDEMPOTENCY_KEY="cand1").json()
-        self.assertEqual(candidate["status"], "eligible")
+        self.assertEqual(candidate["status"], "discussion_draft")
         decision = self.client.post(f"/api/v1/projects/{self.project.id}/decisions",
             {"expected_revision": 3, "candidate_id": candidate["id"], "scope_version": "scope1", "snapshot_id": "snap1", "limitations": ["hypothesis"]},
             content_type="application/json", HTTP_IDEMPOTENCY_KEY="decision1").json()
-        self.assertEqual(decision["status"], "decision_ready")
+        self.assertEqual(decision["error"]["code"], "AUTHORITATIVE_DECISION_REQUIRED")
 
     def test_evidence_states_distinguish_absent_insufficient_and_conflicting(self):
         self.client.force_login(self.owner)
@@ -115,7 +115,7 @@ class ProjectApiScenarioTests(TestCase):
                 "approval_reviewers": ["r1", "r2"], "current_overlap": "0.20", "submit_threshold": "0.30", "license_valid": True,
                 "publication_type": "eligible_contribution"}
         first = self.client.post(url, base, content_type="application/json", HTTP_IDEMPOTENCY_KEY="pub1").json()
-        self.assertTrue(first["valid"]); self.assertTrue(first["reward_created"])
+        self.assertFalse(first["valid"]); self.assertFalse(first["reward_created"])
         replay = self.client.post(url, base, content_type="application/json", HTTP_IDEMPOTENCY_KEY="pub1").json()
         self.assertEqual(replay["eligibility_id"], first["eligibility_id"])
         ordinary = {**base, "expected_revision": 2, "publication_type": "ordinary"}
@@ -206,9 +206,10 @@ class ProjectApiScenarioTests(TestCase):
 
         before = Project.objects.count()
         with patch("modules.projects.views.Outbox.objects.create", side_effect=RuntimeError("outbox failed")):
-            with self.assertRaises(RuntimeError):
-                self.client.post("/api/v1/projects", {**base, "name": "Rollback"},
-                                 content_type="application/json", HTTP_IDEMPOTENCY_KEY="rollback")
+            response = self.client.post("/api/v1/projects", {**base, "name": "Rollback"},
+                                       content_type="application/json", HTTP_IDEMPOTENCY_KEY="rollback")
+            self.assertEqual(response.status_code, 500)
+            self.assertEqual(response.json()["error"]["code"], "INTERNAL_ERROR")
         self.assertEqual(Project.objects.count(), before)
         self.assertFalse(ResearchConstraint.objects.filter(project__name="Rollback").exists())
         self.assertFalse(WorkflowProjection.objects.filter(project__name="Rollback").exists())

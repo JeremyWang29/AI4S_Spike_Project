@@ -27,6 +27,11 @@ class ResearchConstraint(models.Model):
     confirmed_at = models.DateTimeField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if not self._state.adding and type(self).objects.filter(pk=self.pk, status="confirmed").exists():
+            raise ValueError("Confirmed research constraint is immutable")
+        return super().save(*args, **kwargs)
+
     class Meta:
         app_label = "projects"
         constraints = [models.UniqueConstraint(fields=("project", "version"), name="project_constraint_version")]
@@ -66,6 +71,7 @@ class WorkflowState(models.Model):
 
 
 class MutationRecord(models.Model):
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.PROTECT)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     key = models.CharField(max_length=160)
     action = models.CharField(max_length=120)
@@ -75,4 +81,16 @@ class MutationRecord(models.Model):
 
     class Meta:
         app_label = "projects"
-        constraints = [models.UniqueConstraint(fields=("project", "key"), name="project_idempotency_key")]
+        constraints = [models.UniqueConstraint(fields=("project", "actor", "key"), name="project_actor_idempotency_key")]
+
+
+class DependencyEdge(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="dependency_edges")
+    source_id = models.UUIDField(db_index=True)
+    target_id = models.UUIDField(db_index=True)
+    target_kind = models.CharField(max_length=80)
+    applicability = models.CharField(max_length=32, default="current")
+    approval_content = models.JSONField(default=dict)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("project", "source_id", "target_id"), name="dependency_edge_once")]

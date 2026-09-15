@@ -1,56 +1,289 @@
 openapi: 3.1.0
-info: {title: AI4S Research Decision Platform, version: 0.1.0}
+info:
+  title: AI4S M0 entry and scope
+  version: 0.2.0
+  description: Same-origin session and CSRF. All project mutations are actor-scoped idempotent revision commands. Later-stage submissions are exploratory only.
+security: [{session: []}]
 paths:
   /api/v1/health:
-    get: {responses: {'200': {description: Service and evidence status}}}
-  /api/v1/session/login:
-    get: {responses: {'200': {description: Session state and CSRF bootstrap}}}
-    post: {responses: {'200': {description: Authenticated session}, '403': {description: Invalid credentials or CSRF}}}
-  /api/v1/session/logout:
-    post: {responses: {'200': {description: Session ended}, '403': {description: CSRF rejected}}}
-  /api/v1/projects:
     get:
-      responses: {'200': {description: Projects visible to the current user}, '403': {description: Authentication denied}}
+      security: []
+      responses: {'200': {description: "Availability with UNCONFIGURED and UNVERIFIED providers"}}
+  /api/v1/session/login:
+    get:
+      security: []
+      responses: {'200': {description: "Session state, user_id, administrator flag and CSRF cookie"}}
     post:
-      parameters: [{name: Idempotency-Key, in: header, required: true, schema: {type: string}}]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties: {username: {type: string, maxLength: 150}, password: {type: string, maxLength: 1024}}
+      responses: {'200': {description: "Session created"}, '403': {$ref: '#/components/responses/Error'}, '429': {$ref: '#/components/responses/Error'}}
+  /api/v1/session/logout:
+    post:
+      responses: {'200': {description: "Current session ended"}, '403': {$ref: '#/components/responses/Error'}}
+  /api/v1/session/revoke:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema: {type: object, properties: {user_id: {type: integer, description: Defaults to current user; another user requires administrator}}}
+      responses: {'200': {description: "Existing sessions revoked"}, '403': {$ref: '#/components/responses/Error'}}
+  /api/v1/accounts/issue:
+    post:
+      description: Administrator only. Manual delivery; no email. Reissue inactive invitations; account activation does not add membership.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [expected_revision, name, direction, core_keywords]
-              properties:
-                expected_revision: {type: integer, const: 0}
-                name: {type: string, minLength: 1}
-                direction: {type: string, minLength: 1}
-                core_keywords: {type: array, minItems: 1, items: {type: string}}
-      responses: {'201': {description: Atomic Project, ResearchConstraint v1 draft and WorkflowProjection}, '403': {description: Authentication or CSRF denied}, '409': {description: Idempotency conflict}, '422': {description: Invalid project input}}
-  /api/v1/projects/{project_id}/status:
-    get:
-      parameters: [{name: project_id, in: path, required: true, schema: {type: string, format: uuid}}]
-      responses: {'200': {description: Authorized project status}, '403': {description: Authentication denied}, '404': {description: Project hidden or absent}}
-  /api/v1/projects/{project_id}/gold/evaluate:
+              required: [username, kind]
+              properties: {username: {type: string, maxLength: 150}, kind: {enum: [invite, reset]}}
+      responses: {'200': {description: "Raw token shown once, expires_at, username and user_id"}, '403': {$ref: '#/components/responses/Error'}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/accounts/redeem:
     post:
-      parameters: [{name: project_id, in: path, required: true, schema: {type: string, format: uuid}}, {name: Idempotency-Key, in: header, required: true, schema: {type: string}}]
-      responses: {'200': {description: Three-state Gold gate result}, '403': {description: Access intersection denied}, '422': {description: Recoverable business blocker}}
-  /api/v1/projects/{project_id}/retrieval/compile:
-    post: {responses: {'200': {description: Versioned AST compilation and gate result}, '409': {description: Revision or idempotency conflict}}}
-  /api/v1/projects/{project_id}/retrieval/manual-runs:
-    post: {responses: {'200': {description: Persisted manual execution record}}}
-  /api/v1/projects/{project_id}/materials/import-summary:
-    post: {responses: {'200': {description: Immutable-file import provenance summary}}}
-  /api/v1/projects/{project_id}/evidence:
-    post: {responses: {'200': {description: Locatable evidence record}}}
-  /api/v1/projects/{project_id}/navigation:
-    get: {responses: {'200': {description: Raw counts and configured-method blockers}}}
-  /api/v1/projects/{project_id}/candidates:
-    post: {responses: {'200': {description: Seven-category candidate gate result}}}
-  /api/v1/projects/{project_id}/decisions:
-    post: {responses: {'200': {description: Version-bound decision package}}}
-  /api/v1/projects/{project_id}/contributions/validate:
-    post: {responses: {'200': {description: Consent, dual-review, overlap and reward result}}}
-  /api/v1/projects/{project_id}/models/status:
-    get: {responses: {'200': {description: Model license, baseline and budget readiness}}}
+      security: []
+      description: Anonymous CSRF enforced. Invite expires in 24h; reset in 1h. Hashed single-use tokens; validated password; existing sessions revoked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties: {token: {type: string, maxLength: 256}, password: {type: string, minLength: 12, maxLength: 1024}}
+      responses: {'200': {description: "Redeemed"}, '403': {$ref: '#/components/responses/Error'}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects:
+    get:
+      responses: {'200': {description: "Membership-filtered items with project role; staff has no implicit visibility"}, '403': {$ref: '#/components/responses/Error'}}
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, direction, core_keywords, expected_revision]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 200}
+                direction: {type: string, minLength: 1, maxLength: 2000}
+                core_keywords: {type: array, minItems: 1, maxItems: 200, items: {type: string, maxLength: 200}}
+                expected_revision: {type: integer, const: 0}
+      responses: {'201': {description: "Atomic project, draft, dependencies, projection, event/outbox and request receipt"}, '409': {$ref: '#/components/responses/Error'}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/status:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    get:
+      responses: {'200': {description: "Project metadata and nonauthoritative workflow"}, '404': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/scope:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    get:
+      responses:
+        '200': {description: "Current scope, version history, revision, fixed groups and provider availability", content: {application/json: {schema: {$ref: '#/components/schemas/ScopeResponse'}}}}
+        '404': {$ref: '#/components/responses/Error'}
+    post:
+      description: Owner/researcher only. Confirm freezes validated content; edit clones a confirmed version. Existing candidate provenance and conflict identities cannot be removed.
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - {$ref: '#/components/schemas/Command'}
+                - type: object
+                  required: [action]
+                  properties:
+                    action: {enum: [save, confirm, edit]}
+                    direction: {type: string, minLength: 1, maxLength: 2000}
+                    details: {$ref: '#/components/schemas/ScopeDetails'}
+      responses:
+        '200': {description: "Saved scope and history", content: {application/json: {schema: {$ref: '#/components/schemas/ScopeResponse'}}}}
+        '404': {$ref: '#/components/responses/Error'}
+        '409': {$ref: '#/components/responses/Error'}
+        '422': {$ref: '#/components/responses/Error'}
+  /api/v1/projects/{project_id}/members:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    get:
+      responses: {'200': {description: "Owner-only member list"}, '404': {$ref: '#/components/responses/Error'}}
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+                - {$ref: '#/components/schemas/Command'}
+                - type: object
+                  required: [user_id, role]
+                  properties: {user_id: {type: integer}, role: {enum: [researcher, reviewer, remove]}}
+      responses: {'200': {description: "Explicit owner membership command with project_revision"}, '404': {$ref: '#/components/responses/Error'}, '409': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/projection/rebuild:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "Rebuilt authoritative projection and event watermark"}, '404': {$ref: '#/components/responses/Error'}, '409': {$ref: '#/components/responses/Error'}}
   /api/v1/projects/{project_id}/tasks/{task_id}:
-    get: {responses: {'200': {description: Durable task state}, '404': {description: Hidden or absent task}}}
+    parameters: [{$ref: '#/components/parameters/Project'}, {$ref: '#/components/parameters/Task'}]
+    get:
+      responses: {'200': {description: "Task status, target version, fencing token and recovery action"}, '404': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/tasks/{task_id}/retry:
+    parameters: [{$ref: '#/components/parameters/Project'}, {$ref: '#/components/parameters/Task'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "Current failed local projection task rerun synchronously with new fence"}, '404': {$ref: '#/components/responses/Error'}, '409': {$ref: '#/components/responses/Error'}, '422': {description: "External paid or unknown outcome requires reconciliation"}}
+  /api/v1/projects/{project_id}/files/{material_id}:
+    parameters: [{$ref: '#/components/parameters/Project'}, {name: material_id, in: path, required: true, schema: {type: string, format: uuid}}]
+    get:
+      responses: {'404': {description: "Denied until both project and material authorization are available"}}
+  /api/v1/projects/{project_id}/gold/evaluate:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "Exploratory counts only; qualified always false without authoritative evaluation packages"}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/retrieval/compile:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "Bounded exploratory AST compilation; submitted roundtrip/approval booleans do not grant formal qualification"}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/retrieval/manual-runs:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "Exploratory submitted execution metadata, finite nonnegative counts"}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/materials/import-summary:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "Exploratory submitted summary; no actual file import or authoritative material"}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/evidence:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "Exploratory location assertion; submitted human_verified cannot create authoritative verification"}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/navigation:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    get:
+      responses: {'200': {description: "Exploratory counts and unconfigured-method blockers; formal always false"}}
+  /api/v1/projects/{project_id}/candidates:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "Discussion draft only; submitted reviewers and gates never produce eligibility"}, '422': {$ref: '#/components/responses/Error'}}
+  /api/v1/projects/{project_id}/decisions:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'422': {description: "AUTHORITATIVE_DECISION_REQUIRED; later-stage workflow unconfigured"}}
+  /api/v1/projects/{project_id}/contributions/validate:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    post:
+      parameters: [{$ref: '#/components/parameters/Key'}]
+      requestBody: {$ref: '#/components/requestBodies/Command'}
+      responses: {'200': {description: "AUTHORITATIVE_PUBLICATION_REQUIRED; valid false, eligibility null, reward_created false"}}
+  /api/v1/projects/{project_id}/models/status:
+    parameters: [{$ref: '#/components/parameters/Project'}]
+    get:
+      responses: {'200': {description: "Model configuration availability only; does not authorize processing"}}
+components:
+  securitySchemes:
+    session: {type: apiKey, in: cookie, name: sessionid}
+  parameters:
+    Project: {name: project_id, in: path, required: true, schema: {type: string, format: uuid}}
+    Task: {name: task_id, in: path, required: true, schema: {type: string, format: uuid}}
+    Key: {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 1, maxLength: 160}}
+  responses:
+    Error:
+      description: Structured error; private missing/denied projects share 404. Anonymous is 403 NOT_AUTHENTICATED; CSRF_FAILED is distinct.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error:
+                type: object
+                required: [code, message, owner, recovery, details, trace_id]
+                properties: {code: {type: string}, message: {type: string}, owner: {type: string}, recovery: {type: string}, details: {type: object}, trace_id: {type: string}}
+  requestBodies:
+    Command:
+      required: true
+      content: {application/json: {schema: {$ref: '#/components/schemas/Command'}}}
+  schemas:
+    Command:
+      type: object
+      required: [expected_revision]
+      properties: {expected_revision: {type: integer, minimum: 0}}
+    ScopeDetails:
+      type: object
+      required: [answers, candidates, conflicts, semantic_review]
+      properties:
+        answers:
+          type: object
+          additionalProperties: false
+          properties:
+            object: {type: string, maxLength: 2000}
+            mechanism: {type: string, maxLength: 2000}
+            method: {type: string, maxLength: 2000}
+            outcome: {type: string, maxLength: 2000}
+            context: {type: string, maxLength: 2000}
+            years: {type: string, description: Start/end years between 1800 and current year plus one}
+            languages: {type: string, maxLength: 2000}
+            types: {type: string, maxLength: 2000}
+            include: {type: string, maxLength: 2000}
+            exclude: {type: string, maxLength: 2000}
+            resources: {type: string, maxLength: 2000}
+        candidates:
+          type: array
+          maxItems: 200
+          items:
+            type: object
+            required: [id, term, source, decision]
+            properties:
+              id: {type: string, maxLength: 80}
+              term: {type: string, maxLength: 200}
+              source: {enum: [manual, project_keyword], description: Only server may seed project_keyword}
+              decision: {enum: [pending, accepted, rejected, replaced]}
+              replacement: {type: string, maxLength: 200}
+        conflicts:
+          type: array
+          maxItems: 200
+          items:
+            type: object
+            required: [id, description, resolution]
+            properties: {id: {type: string, maxLength: 80}, description: {type: string, maxLength: 2000}, resolution: {type: string, maxLength: 2000}}
+        semantic_review: {type: string, maxLength: 4000, description: Required on confirm; manual statement not AI certainty}
+    Scope:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        status: {enum: [draft, confirmed]}
+        direction: {type: string}
+        core_keywords: {type: array, items: {type: string}}
+        details: {$ref: '#/components/schemas/ScopeDetails'}
+        confirmed_at: {type: [string, 'null'], format: date-time}
+    ScopeResponse:
+      type: object
+      properties:
+        project_id: {type: string, format: uuid}
+        project_revision: {type: integer}
+        scope: {$ref: '#/components/schemas/Scope'}
+        history: {type: array, items: {$ref: '#/components/schemas/Scope'}}
+        groups: {type: array, minItems: 4, maxItems: 4, items: {type: object}}
+        providers: {type: object, properties: {ai: {const: UNCONFIGURED}, knowledge_graph: {const: UNCONFIGURED}}}

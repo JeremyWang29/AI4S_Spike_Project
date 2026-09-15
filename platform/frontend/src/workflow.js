@@ -88,7 +88,7 @@ export function initialPreview(project){
   const stepStates=project.workflow?.step_states||{project:'complete',scope:'current',platforms:'locked',exploration:'locked',seeds:'locked',evaluation:'locked',corpus:'locked',analysis:'locked'}
   const scope=project.demo
     ? {object:'肿瘤细胞',mechanism:'铁死亡调控',method:'放疗联合干预',outcome:'放疗敏感性',context:'实体瘤模型',years:'2020—2026',languages:'中文、英文',types:'论文、专利',include:'机制或干预研究',exclude:'仅综述且无新证据',resources:'细胞与公开组学数据',conflictsResolved:true,confirmed:true}
-    : {object:'',mechanism:'',method:'',outcome:'',context:'',years:'',languages:'',types:'',include:'',exclude:'',resources:'',conflictsResolved:false,confirmed:false}
+    : {object:'',mechanism:'',method:'',outcome:'',context:'',years:'',languages:'',types:'',include:'',exclude:'',resources:'',conflictsResolved:false,confirmed:project.scope_status==='confirmed'}
   return {
     schema:PREVIEW_SCHEMA, projectId:project.id, stepStates:{...stepStates}, activeStep:project.demo?5:1,
     scope,
@@ -110,6 +110,7 @@ function validPreview(value,projectId){
     value.corpus&&value.corpusChecks&&Array.isArray(value.history)&&Array.isArray(value.selectedPlatforms)&&Array.isArray(value.suggestions)&&Array.isArray(value.capabilities)
 }
 export function loadPreview(project){
+  if(!project.demo) return initialPreview(project)
   try{
     const value=JSON.parse(sessionStorage.getItem(key(project.id)))
     if(validPreview(value,project.id)) return value
@@ -119,3 +120,5 @@ export function loadPreview(project){
 export function savePreview(value){try{sessionStorage.setItem(key(value.projectId),JSON.stringify(value));return true}catch{return false}}
 export function clearPreview(project){sessionStorage.removeItem(key(project.id));return initialPreview(project)}
 export function platformById(id){return platforms.find(item=>item.id===id)}
+
+export function latestRequest(){let generation=0;return {begin:projectId=>({generation:++generation,projectId}),current:(ticket,projectId)=>ticket.generation===generation&&ticket.projectId===projectId}}
