@@ -8,6 +8,7 @@ import PreviewBadge from './components/PreviewBadge.vue'
 import ProjectForm from './components/ProjectForm.vue'
 import WorkflowStepper from './components/WorkflowStepper.vue'
 import ScopePanel from './components/ScopePanel.vue'
+import SearchPlanDraft from './components/SearchPlanDraft.vue'
 import AccountPanel from './components/AccountPanel.vue'
 
 const session=ref({authenticated:false,username:null}),projects=ref([]),selected=ref(null),preview=ref(null),pendingCreate=ref(null)
@@ -83,7 +84,7 @@ const percent=value=>`${(Number(value)*100).toFixed(1)}%`
 
     <main v-if="selected&&preview" class="main-area">
       <header class="topbar"><div><span class="overline">PROJECT / {{selected.demo?'DEMO':'V'+selected.revision}}</span><h1>{{selected.name}}</h1><p>{{selected.direction}}</p></div><div class="header-actions"><PreviewBadge v-if="selected.demo"/><button class="secondary" @click="resetPreview">清除本次预览</button><button v-if="session.authenticated" class="primary" @click="showCreate=true">＋ 新建项目</button></div></header>
-      <div class="preview-banner"><b>{{selected.demo?'示例流程':'M0 入口与范围'}}</b><span>{{selected.demo?'所有产物仅供交互预览。':'账号、项目和范围版本保存在服务器。后续阶段为交互预览，尚未启用正式业务。'}}</span></div>
+      <div class="preview-banner"><b>{{selected.demo?'示例流程':'M1.1 范围与方案草稿'}}</b><span>{{selected.demo?'所有产物仅供交互预览。':'账号、项目、范围与检索方案草稿保存在服务器。方案尚待追问与确认，平台检索等后续阶段仍为交互预览。'}}</span></div>
       <AccountPanel v-if="showAccount&&session.authenticated" :key="selected.id" :session="session" :project="selected" @revoked="logout" @updated="revisionUpdated"/>
       <WorkflowStepper :active="activeStep" :states="preview.stepStates" @select="chooseStep"/>
 
@@ -95,10 +96,10 @@ const percent=value=>`${(Number(value)*100).toFixed(1)}%`
 
           <div v-if="currentStep.id==='project'" class="panel-stack">
             <article class="card"><span class="overline">PROJECT BRIEF</span><h3>{{selected.name}}</h3><p>{{selected.direction}}</p><div class="tag-row"><span v-for="term in selected.core_keywords" :key="term" class="tag">{{term}}</span></div><dl class="facts"><div><dt>项目版本</dt><dd>V{{selected.revision}}</dd></div><div><dt>范围版本</dt><dd>草稿 V{{selected.scope_version||1}}</dd></div><div><dt>数据位置</dt><dd>{{selected.demo?'示例命名空间':'服务器项目'}}</dd></div></dl></article>
-            <article class="card source-card"><PreviewBadge :label="selected.demo?'示例项目 · 非服务器数据':'真实项目元数据 · 后续步骤为交互预览'"/><h3>下一步：确认研究边界</h3><p>核心关键词只是范围访谈的起点，不会自动成为因果结论或已执行检索式。</p><button class="primary" @click="chooseStep(1)">进入范围与概念 →</button></article>
+            <article class="card source-card"><PreviewBadge :label="selected.demo?'示例项目 · 非服务器数据':'真实项目 · 范围与方案草稿已接入服务器'"/><h3>下一步：确认研究边界</h3><p>核心关键词只是范围访谈的起点，不会自动成为因果结论或已执行检索式。</p><button class="primary" @click="chooseStep(1)">进入范围与概念 →</button></article>
           </div>
 
-          <ScopePanel v-else-if="currentStep.id==='scope'&&!selected.demo" :key="selected.id" :project="selected" :drafts="scopeDrafts" @saved="scopeSaved"/>
+          <div v-else-if="currentStep.id==='scope'&&!selected.demo" class="panel-stack"><ScopePanel :key="selected.id" :project="selected" :drafts="scopeDrafts" @saved="scopeSaved"/><SearchPlanDraft :key="'plan-'+selected.id" :project="selected"/></div>
           <div v-else-if="currentStep.id==='scope'" class="panel-stack">
             <article v-for="group in scopeGroups" :key="group.title" class="card"><div class="card-title"><span class="overline">SCOPE INTERVIEW</span><PreviewBadge label="浏览器范围草稿 · 未写入服务器"/></div><h3>{{group.title}}</h3><div class="form-grid"><label v-for="field in group.fields" :key="field[0]">{{field[1]}}<input v-model="preview.scope[field[0]]" @change="updateScope"></label></div></article>
             <article class="card"><div class="card-title"><div><span class="overline">CONCEPT CANDIDATES</span><h3>候选词逐条决定</h3></div><PreviewBadge/></div><div class="suggestion" v-for="item in preview.suggestions" :key="item.id"><div><b>{{item.term}}</b><small>{{item.source}}</small></div><div><button :class="{chosen:item.decision==='accepted'}" @click="setSuggestion(item,'accepted')">接受</button><button :class="{chosen:item.decision==='modified'}" @click="setSuggestion(item,'modified')">修改后接受</button><button :class="{chosen:item.decision==='rejected'}" @click="setSuggestion(item,'rejected')">拒绝</button></div></div><label class="check-line"><input v-model="preview.scope.conflictsResolved" type="checkbox" @change="updateScope"> 已人工检查年份、类型和纳排条件，当前无未处理矛盾</label><div class="card-actions"><span>{{preview.scope.confirmed?'范围已确认；修改会使下游需重新验证。':scopeComplete?'必填范围已完整，请人工确认。':'请补全范围、处理所有候选词并确认无矛盾。'}}</span><button class="primary" :disabled="!scopeComplete" @click="confirmScope">确认范围 V{{(selected.scope_version||1)+(preview.scope.confirmed?1:0)}}</button></div></article>

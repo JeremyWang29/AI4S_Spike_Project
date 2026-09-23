@@ -1,0 +1,114 @@
+Creating test database for alias 'default' ('test_ai4s_acceptance')...
+
+Found 61 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: rest_framework
+  Apply all migrations: auth, contenttypes, execution, identity, knowledge, projects, retrieval, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying execution.0001_initial... OK
+  Applying projects.0001_initial... OK
+  Applying projects.0002_project_entry... OK
+  Applying projects.0003_dependencyedge_and_more... OK
+  Applying identity.0001_initial... OK
+  Applying knowledge.0001_initial... OK
+  Applying projects.0004_backfill_m0... OK
+  Applying retrieval.0001_initial... OK
+  Applying sessions.0001_initial...test_creation_of_test_accounts_is_development_only (tests.contracts.test_m0.DeploymentContractTests.test_creation_of_test_accounts_is_development_only) ... ok
+test_nondevelopment_missing_secret_fails_closed (tests.contracts.test_m0.DeploymentContractTests.test_nondevelopment_missing_secret_fails_closed) ... ok
+test_invalid_references_cycles_and_partitions_are_atomic (tests.contracts.test_m1_1.StructureContracts.test_invalid_references_cycles_and_partitions_are_atomic) ... ok
+test_create_fault_after_each_write_rolls_back_and_can_retry (tests.scenarios.test_m0.M0Scenarios.test_create_fault_after_each_write_rolls_back_and_can_retry) ... Unhandled error trace=e21158e2-e4d3-49e8-8d09-d18146ac8b50 type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 198, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=cf307945-573f-47ed-b70a-e33d61231a85 type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 204, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=d6664675-23ae-4e1f-8b63-51fe2e91075d type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 207, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\services.py', 63, 'create_dependencies'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=3563f7e7-a1a9-4b5f-985b-bd2681a5d4c8 type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 211, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=967b4e68-0a64-44bd-99b0-305137cf9cf5 type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 218, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 32, '_state'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 953, 'get_or_create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=a910f5bc-c95b-4257-b3f0-ff86dccc0175 type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 219, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=39d95965-8647-4911-9349-9bd5ca47175e type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 225, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=a032a5ae-799c-48ea-b105-8afcbb4a0435 type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 226, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\identity\\services.py', 15, 'audit'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=d39c057f-56e3-4a24-8333-c123b47db3ce type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 227, 'projects_collection'), ('D:\\Program\\Lib\\contextlib.py', 81, 'inner'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\services.py', 175, 'rebuild_projection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 953, 'get_or_create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+Unhandled error trace=df7c3bcc-617e-4ef2-82ba-ce8d0dd67861 type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 229, 'projects_collection'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\manager.py', 87, 'manager_method'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\django\\db\\models\\query.py', 663, 'create'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\tests\\scenarios\\test_m0.py', 140, 'fail_after')]
+ok
+test_errors_log_correlation_without_exception_material (tests.scenarios.test_m0.M0Scenarios.test_errors_log_correlation_without_exception_material) ... ok
+test_invite_reset_expiry_replay_reissue_revocation_and_audit (tests.scenarios.test_m0.M0Scenarios.test_invite_reset_expiry_replay_reissue_revocation_and_audit) ... ok
+test_login_failure_structured_and_throttled_valid_login_reset (tests.scenarios.test_m0.M0Scenarios.test_login_failure_structured_and_throttled_valid_login_reset) ... ok
+test_malformed_inputs_and_forged_approvals_never_grant_formal_status (tests.scenarios.test_m0.M0Scenarios.test_malformed_inputs_and_forged_approvals_never_grant_formal_status) ... ok
+test_old_formal_state_is_exploratory_without_changing_storage (tests.scenarios.test_m0.M0Scenarios.test_old_formal_state_is_exploratory_without_changing_storage) ... ok
+test_projection_rebuild_replays_watermark_without_duplicate_effects (tests.scenarios.test_m0.M0Scenarios.test_projection_rebuild_replays_watermark_without_duplicate_effects) ... ok
+test_retry_key_cannot_replay_another_task (tests.scenarios.test_m0.M0Scenarios.test_retry_key_cannot_replay_another_task) ... ok
+test_retry_runs_local_handler_and_rejects_stale_or_paid_results (tests.scenarios.test_m0.M0Scenarios.test_retry_runs_local_handler_and_rejects_stale_or_paid_results) ... ok
+test_review_invalid_inputs_and_inactive_removal (tests.scenarios.test_m0.M0Scenarios.test_review_invalid_inputs_and_inactive_removal) ... ok
+test_roles_all_reads_mutations_and_file_denial (tests.scenarios.test_m0.M0Scenarios.test_roles_all_reads_mutations_and_file_denial) ... ok
+test_scope_incomplete_duplicate_conflict_and_provenance_bypasses (tests.scenarios.test_m0.M0Scenarios.test_scope_incomplete_duplicate_conflict_and_provenance_bypasses) ... ok
+test_scope_restores_fresh_session_history_and_linked_invalidation (tests.scenarios.test_m0.M0Scenarios.test_scope_restores_fresh_session_history_and_linked_invalidation) ... ok
+test_two_sessions_revision_and_actor_scoped_idempotency (tests.scenarios.test_m0.M0Scenarios.test_two_sessions_revision_and_actor_scoped_idempotency) ... ok
+test_generic_conflict_unknown_acronym_and_no_approval_input (tests.scenarios.test_m1_1.SearchPlanScenarios.test_generic_conflict_unknown_acronym_and_no_approval_input) ... ok
+test_partial_failure_rolls_back_all_objects_and_event (tests.scenarios.test_m1_1.SearchPlanScenarios.test_partial_failure_rolls_back_all_objects_and_event) ... Unhandled error trace=6ea2ba49-fe08-46e2-8c00-f6ec8021b9f7 type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\retrieval\\views.py', 11, 'collection'), ('D:\\Program\\Lib\\contextlib.py', 81, 'inner'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\retrieval\\services.py', 83, 'create_plan'), ('D:\\Program\\Lib\\unittest\\mock.py', 1139, '__call__'), ('D:\\Program\\Lib\\unittest\\mock.py', 1143, '_mock_call'), ('D:\\Program\\Lib\\unittest\\mock.py', 1198, '_execute_mock_call')]
+ok
+test_psmb5_saved_draft_refresh_sources_and_partition (tests.scenarios.test_m1_1.SearchPlanScenarios.test_psmb5_saved_draft_refresh_sources_and_partition) ... ok
+test_rejected_concepts_and_additional_blocks_are_explicit (tests.scenarios.test_m1_1.SearchPlanScenarios.test_rejected_concepts_and_additional_blocks_are_explicit) ... ok
+test_title_override_and_fixed_boolean_semantics (tests.scenarios.test_m1_1.SearchPlanScenarios.test_title_override_and_fixed_boolean_semantics) ... ok
+test_unknown_provenance_long_label_and_generic_partition (tests.scenarios.test_m1_1.SearchPlanScenarios.test_unknown_provenance_long_label_and_generic_partition) ... ok
+test_version_permission_and_scope_change_history (tests.scenarios.test_m1_1.SearchPlanScenarios.test_version_permission_and_scope_change_history) ... ok
+test_evidence_states_distinguish_absent_insufficient_and_conflicting (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_evidence_states_distinguish_absent_insufficient_and_conflicting) ... ok
+test_gold_api_exact_boundary (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_gold_api_exact_boundary) ... ok
+test_gold_cannot_qualify_without_all_formal_checks (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_gold_cannot_qualify_without_all_formal_checks) ... ok
+test_gold_requires_idempotency_and_revision_t02 (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_gold_requires_idempotency_and_revision_t02) ... ok
+test_independent_dependency_status_s01 (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_independent_dependency_status_s01) ... ok
+test_invalid_gap_taxonomy_is_rejected (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_invalid_gap_taxonomy_is_rejected) ... ok
+test_m1_retrieval_import_workflow_and_replay (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_m1_retrieval_import_workflow_and_replay) ... ok
+test_m2_evidence_candidate_and_decision_matrix (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_m2_evidence_candidate_and_decision_matrix) ... ok
+test_m3_reward_once_and_noncontribution_no_reward (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_m3_reward_once_and_noncontribution_no_reward) ... ok
+test_m4_model_and_task_status_are_project_isolated (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_m4_model_and_task_status_are_project_isolated) ... ok
+test_project_collection_creates_atomic_v011_entry_s17_t22 (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_project_collection_creates_atomic_v011_entry_s17_t22) ... ok
+test_project_collection_validates_and_isolates_users (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_project_collection_validates_and_isolates_users) ... ok
+test_project_create_idempotency_conflict_and_rollback (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_project_create_idempotency_conflict_and_rollback) ... Unhandled error trace=3e1c762a-fdee-43dc-96b4-0a4b3e9b149d type=RuntimeError frames=[('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\views.py', 512, 'dispatch'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\.venv\\Lib\\site-packages\\rest_framework\\decorators.py', 50, 'handler'), ('D:\\research\\2025\\AI4S_生命科学\\platform\\backend\\modules\\projects\\views.py', 225, 'projects_collection'), ('D:\\Program\\Lib\\unittest\\mock.py', 1139, '__call__'), ('D:\\Program\\Lib\\unittest\\mock.py', 1143, '_mock_call'), ('D:\\Program\\Lib\\unittest\\mock.py', 1198, '_execute_mock_call')]
+ok
+test_project_isolation_t01 (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_project_isolation_t01) ... ok
+test_session_and_csrf_business_codes_t20 (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_session_and_csrf_business_codes_t20) ... ok
+test_session_login_issues_csrf_cookie_and_accepts_token_t20 (tests.scenarios.test_project_flow.ProjectApiScenarioTests.test_session_login_issues_csrf_cookie_and_accepts_token_t20) ... ok
+test_login_session_is_visible_to_waiting_revocation (tests.contracts.test_m0.PostgreSQLConcurrencyTests.test_login_session_is_visible_to_waiting_revocation) ... ok
+test_same_actor_create_key_serializes_complete_project (tests.contracts.test_m0.PostgreSQLConcurrencyTests.test_same_actor_create_key_serializes_complete_project) ... ok
+test_same_revision_scope_writes_one_winner (tests.contracts.test_m0.PostgreSQLConcurrencyTests.test_same_revision_scope_writes_one_winner) ... ok
+test_single_token_two_redemptions_exactly_once (tests.contracts.test_m0.PostgreSQLConcurrencyTests.test_single_token_two_redemptions_exactly_once) ... ok
+test_historical_receipt_backfill_replays_without_new_mutation (tests.contracts.test_m0_migration.M0MigrationTests.test_historical_receipt_backfill_replays_without_new_mutation) ... ok
+test_same_key_race_creates_one_complete_draft_and_event (tests.contracts.test_m1_1.ConcurrentPlanContracts.test_same_key_race_creates_one_complete_draft_and_event) ... ok
+test_partial_acceptance_invalidates_consent_s12_s17 (tests.contracts.test_domain_contracts.AssetEntitlementTests.test_partial_acceptance_invalidates_consent_s12_s17) ... ok
+test_unique_reward_fifo_and_pause_s10_s15_s16 (tests.contracts.test_domain_contracts.AssetEntitlementTests.test_unique_reward_fifo_and_pause_s10_s15_s16) ... ok
+test_49_rounding_unknown_and_missing_label_block_t06 (tests.contracts.test_domain_contracts.EvaluationContractTests.test_49_rounding_unknown_and_missing_label_block_t06) ... ok
+test_exact_point_85_and_fifty_are_valid_s06_t06 (tests.contracts.test_domain_contracts.EvaluationContractTests.test_exact_point_85_and_fifty_are_valid_s06_t06) ... ok
+test_missing_formal_check_blocks_approval (tests.contracts.test_domain_contracts.EvaluationContractTests.test_missing_formal_check_blocks_approval) ... ok
+test_three_state_truth_table_s04 (tests.contracts.test_domain_contracts.EvaluationContractTests.test_three_state_truth_table_s04) ... ok
+test_intersection_deny_t01 (tests.contracts.test_domain_contracts.PermissionAndModelTests.test_intersection_deny_t01) ... ok
+test_model_license_and_unconfigured_quality_s14 (tests.contracts.test_domain_contracts.PermissionAndModelTests.test_model_license_and_unconfigured_quality_s14) ... ok
+test_budget_unknown_is_not_released_t04 (tests.contracts.test_domain_contracts.ReliabilityContractTests.test_budget_unknown_is_not_released_t04) ... ok
+test_stale_worker_and_old_target_s08_t02 (tests.contracts.test_domain_contracts.ReliabilityContractTests.test_stale_worker_and_old_target_s08_t02) ... ok
+test_followup_gate_does_not_grant_gold_s06 (tests.contracts.test_domain_contracts.ResearchAnalysisOperationsTests.test_followup_gate_does_not_grant_gold_s06) ... ok
+test_journal_hash_chain_and_deletion_t08_t09 (tests.contracts.test_domain_contracts.ResearchAnalysisOperationsTests.test_journal_hash_chain_and_deletion_t08_t09) ... ok
+test_unconfigured_analysis_s09_and_independent_slice_s19 (tests.contracts.test_domain_contracts.ResearchAnalysisOperationsTests.test_unconfigured_analysis_s09_and_independent_slice_s19) ... ok
+test_canonical_compilation_and_unverified_block (tests.contracts.test_domain_contracts.RetrievalContractTests.test_canonical_compilation_and_unverified_block) ... ok
+test_coarse_does_not_require_gold_but_formal_does_s02 (tests.contracts.test_domain_contracts.RetrievalContractTests.test_coarse_does_not_require_gold_but_formal_does_s02) ... ok
+
+----------------------------------------------------------------------
+Ran 61 tests in 34.838s
+
+OK
+Destroying test database for alias 'default' ('test_ai4s_acceptance')...
+
+ OK
+System check identified no issues (0 silenced).

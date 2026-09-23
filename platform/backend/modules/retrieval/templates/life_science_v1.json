@@ -1,0 +1,24 @@
+{
+  "id": "life_science", "version": 1,
+  "facets": ["entity", "disease", "mechanism", "intervention", "outcome", "unresolved"],
+  "partitions": ["target_disease_main", "cross_disease_supplement"],
+  "vocabulary_source": "local_curated_life_science_v1",
+  "entries": [
+    {"key": "A", "facet": "entity", "label": "PSMB5", "synonyms": ["PSMB5"]},
+    {"key": "B", "facet": "entity", "label": "LSD1/KDM1A", "synonyms": ["LSD1", "KDM1A"]},
+    {"key": "C", "facet": "entity", "label": "PRMT5", "synonyms": ["PRMT5"]},
+    {"key": "D", "facet": "disease", "label": "食管鳞癌", "synonyms": ["食管鳞癌", "食管鳞状细胞癌", "esophageal squamous cell carcinoma", "ESCC"]},
+    {"key": "E", "facet": "mechanism", "label": "铁死亡", "synonyms": ["铁死亡", "ferroptosis"]},
+    {"key": "F", "facet": "intervention", "label": "放疗／照射", "synonyms": ["放疗", "照射", "radiotherapy", "irradiation"]},
+    {"key": "G", "facet": "outcome", "label": "放疗反应", "synonyms": [], "subclasses": {"resistance": ["放疗抵抗", "radioresistance"], "sensitivity": ["放疗敏感性", "radiosensitivity"]}},
+    {"key": "lung_cancer", "facet": "disease", "label": "肺癌", "synonyms": ["肺癌", "lung cancer"]},
+    {"key": "autophagy", "facet": "mechanism", "label": "自噬", "synonyms": ["自噬", "autophagy"]},
+    {"key": "TP53", "facet": "entity", "label": "TP53", "synonyms": ["TP53", "p53"]}
+  ],
+  "relation_markers": ["通过", "抑制", "介导", "促进", "调控"],
+  "initial_tasks": [
+    {"key": "Q01", "purpose": "疾病与机制背景覆盖", "expression": ["AND", "D", "E", ["OR", "F", "G"]]},
+    {"key": "Q02", "purpose": "核心实体与目标疾病定位", "expression": ["AND", "A", "D"]},
+    {"key": "Q11", "purpose": "高度重合线索（不代表机制成立）", "expression": ["AND", "A", "B", "C", "D", "E", ["OR", "F", "G"]]}
+  ]
+}

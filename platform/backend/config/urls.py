@@ -1,8 +1,11 @@
 from django.urls import path
 from modules.projects import views
 from modules.identity import views as identity
+from modules.retrieval import views as retrieval
 
 urlpatterns = [
+    path("api/v1/projects/<uuid:project_id>/search-plans", retrieval.collection),
+    path("api/v1/search-plans/<uuid:plan_id>", retrieval.detail),
     path("api/v1/health", views.health),
     path("api/v1/session/login", identity.session_login),
     path("api/v1/session/logout", identity.session_logout),

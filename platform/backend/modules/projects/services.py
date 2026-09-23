@@ -38,6 +38,27 @@ def read_scope(project):
             "providers": {"ai": "UNCONFIGURED", "knowledge_graph": "UNCONFIGURED"}}
 
 
+def confirmed_scope_dto(project):
+    """Public selector; caller authorizes the project. No graph/full text is exposed."""
+    from modules.core import fingerprint
+    scope = project.constraints.order_by("-version").first()
+    if not scope or scope.status != "confirmed":
+        raise BusinessError("SCOPE_VERSION_BLOCKED", "请先确认当前范围", status=409, recovery="返回2A确认范围并刷新")
+    content = {"direction": scope.direction, "core_keywords": scope.core_keywords,
+               "answers": scope.details.get("answers", {})}
+    return {"id": str(scope.id), "version": scope.version, "fingerprint": fingerprint(content),
+            "project_id": str(project.id), "source": "confirmed_scope", "content": deepcopy(content)}
+
+
+def register_plan_dependencies(project, scope_id, concept_id, plan_id):
+    for source in (scope_id, concept_id):
+        DependencyEdge.objects.create(project=project, source_id=source, target_id=plan_id, target_kind="search_plan")
+
+
+def plan_applicability(project_id, plan_id):
+    return "needs_revalidation" if DependencyEdge.objects.filter(project_id=project_id, target_id=plan_id).exclude(applicability="current").exists() else "current"
+
+
 def create_dependencies(project, scope):
     DependencyEdge.objects.create(project=project, source_id=project.id, target_id=scope.id, target_kind="scope")
 
@@ -53,6 +74,9 @@ def invalidate_dependents(project, source_id):
             if edge.applicability == "current":
                 edge.applicability = "needs_revalidation"
                 edge.save(update_fields=("applicability",))
+                if edge.target_kind == "search_plan":
+                    from modules.retrieval.services import mark_plan_needs_revalidation
+                    mark_plan_needs_revalidation(project.id, edge.target_id)
             pending.append(edge.target_id)
 
 

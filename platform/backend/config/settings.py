@@ -18,7 +18,7 @@ CSRF_TRUSTED_ORIGINS = [x for x in os.getenv("AI4S_CSRF_TRUSTED_ORIGINS", _defau
 ROOT_URLCONF = "config.urls"
 INSTALLED_APPS = [
     "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions",
-    "rest_framework", "modules.projects", "modules.execution", "modules.identity", "modules.knowledge",
+    "rest_framework", "modules.projects", "modules.execution", "modules.identity", "modules.knowledge", "modules.retrieval",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
