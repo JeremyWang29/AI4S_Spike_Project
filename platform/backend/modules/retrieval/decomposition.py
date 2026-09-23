@@ -49,6 +49,24 @@ def decompose(snapshot, template):
         block = {"block_key": key, "facet_type": "unresolved", "label": term[:240], "source_spans": [span], "term_refs": [ref], "relation_hypotheses": []}
         blocks.append(block); unknown[term.casefold()] = block
         unresolved.append({"code": "TERM_MEANING_UNRESOLVED", "message": "请确认词义或缩写：" + term, "source_spans": block["source_spans"], "block_refs": [key]})
+    # Typed synonyms only enrich their original parent block. Expansion/focus and
+    # related terms never enter the main AST through a flattened accepted list.
+    typed_variants = []
+    for term in snapshot["concept"].get("typed_terms", []):
+        relation = term.get("relation", "original")
+        if relation == "original": continue
+        parent = term.get("parent_keyword", "")
+        matches = [b for b in blocks if any(r["term"].casefold() == parent.casefold() for r in b["term_refs"])]
+        ref = {"term": term["term"], "origin": "accepted_term", "source": "concept.typed_terms", "relation": relation}
+        if relation == "synonym":
+            if not matches:
+                unresolved.append({"code": "TERM_PARENT_BLOCK_UNRESOLVED", "message": "同义词所属关键词尚未匹配检索块：" + parent,
+                                   "term": term["term"], "parent_keyword": parent})
+            for block in matches: block["term_refs"].append(ref)
+        elif relation == "related" or term.get("variant_selected"):
+            typed_variants.append((term, ref))
+        else:
+            unresolved.append({"code": "TERM_VARIANT_CONFIRMATION_REQUIRED", "message": "扩展／聚焦变体需明确选择：" + term["term"], "term": term})
     for source in sources:
         for marker in template["relation_markers"] + ["LSD1-PRMT5"]:
             if marker in source["text"]:
@@ -88,6 +106,14 @@ def decompose(snapshot, template):
             if block["block_key"] in withheld: continue
             partition = "target_disease_main" if block["facet_type"] == "disease" else "cross_disease_supplement"
             tasks.append(task(f"T{i+1:02}", "概念定位，待确认任务组合", block["block_key"], partition))
+    for index, (term, ref) in enumerate(typed_variants):
+        key = "V" + str(index + 1)
+        blocks.append({"block_key": key, "facet_type": "unresolved", "label": term["term"],
+            "source_spans": [{"source": "concept.typed_terms", "text": term["term"], "fragment": term["term"], "start": 0, "end": len(term["term"])}],
+            "term_refs": [ref], "relation_hypotheses": []})
+        variant = task("V" + str(index + 1), "补充相关词" if term["relation"] == "related" else "已确认扩展／聚焦变体", key, "cross_disease_supplement")
+        variant["expansion_conditions"] = ["父关键词：" + term.get("parent_keyword", "")]
+        tasks.append(variant)
     first = [t["task_key"] for t in tasks]
     later = []
     entities = [b["block_key"] for b in blocks if b["facet_type"] == "entity" and b["block_key"] not in withheld]

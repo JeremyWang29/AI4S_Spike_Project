@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {scopeController,actionController} from '../src/m0Controllers.js'
+import {scopeController,feedbackController,actionController} from '../src/m0Controllers.js'
 const result=revision=>({project_id:'a',project_revision:revision,scope:{status:'draft',details:{answers:{object:'server'},candidates:[],conflicts:[]}}})
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return {promise,resolve,reject}}
 test('failed production scope save retains edit and reuses receipt key',async()=>{
@@ -26,6 +26,19 @@ test('known same-project revision updates next scope command',async()=>{
  let body
  const c=scopeController({api:{scope:async()=>result(1),scopeCommand:async(id,input)=>{body=input;return result(3)}},project:()=>({id:'a'}),emit:()=>{}})
  await c.load();c.syncRevision(2);await c.command('save');assert.equal(body.expected_revision,2)
+})
+test('feedback mutation refreshes the authoritative scope before notifying parent',async()=>{
+ const events=[],calls=[],api={
+  feedback:async()=>({project_id:'a',project_revision:calls.includes('write')?2:1,items:[]}),
+  feedbackCommand:async()=>{calls.push('write');return {project_id:'a',project_revision:2,added:1}},
+  scope:async()=>{calls.push('scope');return result(2)},
+ }
+ const c=feedbackController({api,project:()=>({id:'a'}),emit:(...args)=>events.push(args)})
+ await c.load();await c.command({action:'import'})
+ assert.deepEqual(calls,['write','scope'])
+ assert.equal(events[0][0],'saved')
+ assert.equal(events[0][1].scope.status,'draft')
+ assert.equal(c.data.value.project_revision,2)
 })
 test('account disposal fences late membership and revision callbacks',async()=>{
  const pending=deferred(),events=[];let applied=false

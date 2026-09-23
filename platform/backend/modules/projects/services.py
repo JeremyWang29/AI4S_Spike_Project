@@ -9,6 +9,7 @@ from modules.execution.models import Event, Inbox
 from modules.knowledge.services import freeze_concepts
 from .models import DependencyEdge, ResearchConstraint, WorkflowProjection
 from .validation import text, enumeration, invalid
+from . import guided
 
 QUESTION_GROUPS = [
     {"id": "research", "title": "研究对象与机制", "fields": ["object", "mechanism", "method", "outcome", "context"]},
@@ -20,8 +21,8 @@ ANSWER_FIELDS = [field for group in QUESTION_GROUPS for field in group["fields"]
 
 
 def initial_details(keywords=()):
-    return {"answers": {key: "" for key in ANSWER_FIELDS}, "candidates": [
-        {"id": str(uuid.uuid4()), "term": term, "source": "project_keyword", "decision": "pending", "replacement": ""}
+    return {**guided.defaults(), "answers": {key: "" for key in ANSWER_FIELDS}, "candidates": [
+        {"id": str(uuid.uuid4()), "term": term, "source": "project_keyword", "decision": "pending", "replacement": "", "relation": "original", "parent_keyword": term, "variant_selected": False}
         for term in keywords], "conflicts": [], "semantic_review": ""}
 
 
@@ -33,9 +34,11 @@ def scope_payload(scope):
 
 def read_scope(project):
     versions = list(project.constraints.order_by("-version"))
-    return {"project_id": str(project.id), "scope": scope_payload(versions[0]) if versions else None, "history": [scope_payload(item) for item in versions],
+    from .suggestions import config
+    provider = config()
+    return {"project_id": str(project.id), "external_processing_allowed": project.external_processing_allowed, "scope": scope_payload(versions[0]) if versions else None, "history": [scope_payload(item) for item in versions],
             "project_revision": project.revision, "groups": QUESTION_GROUPS,
-            "providers": {"ai": "UNCONFIGURED", "knowledge_graph": "UNCONFIGURED"}}
+            "providers": {"ai": "UNCONFIGURED" if not all(provider.get(k) for k in ('url','model','key')) else ('AVAILABLE' if project.external_processing_allowed else 'DENIED'), "knowledge_graph": "UNCONFIGURED"}}
 
 
 def confirmed_scope_dto(project):
@@ -45,7 +48,7 @@ def confirmed_scope_dto(project):
     if not scope or scope.status != "confirmed":
         raise BusinessError("SCOPE_VERSION_BLOCKED", "请先确认当前范围", status=409, recovery="返回2A确认范围并刷新")
     content = {"direction": scope.direction, "core_keywords": scope.core_keywords,
-               "answers": scope.details.get("answers", {})}
+               "answers": scope.details.get("answers", {}), "boundary": scope.details.get("boundary", {})}
     return {"id": str(scope.id), "version": scope.version, "fingerprint": fingerprint(content),
             "project_id": str(project.id), "source": "confirmed_scope", "content": deepcopy(content)}
 
@@ -85,9 +88,9 @@ def validate_details(details, confirming=False):
     answers = details.get("answers", {})
     if not isinstance(answers, dict) or set(answers) - set(ANSWER_FIELDS): invalid("访谈字段无效")
     for key in ANSWER_FIELDS:
-        text(answers.get(key, ""), key, 2000, required=confirming)
+        text(answers.get(key, ""), key, 2000, required=confirming and details.get("schema_version") != 2 and key not in ("include", "exclude"))
     years = answers.get("years", "").strip()
-    if years:
+    if years and details.get('schema_version') != 2:
         match = re.fullmatch(r"(\d{4})\s*[-—–至]\s*(\d{4})", years)
         if not match or not 1800 <= int(match[1]) <= int(match[2]) <= timezone.now().year + 1:
             invalid("年份须为有效的起止年份，例如2020—2026")
@@ -100,7 +103,10 @@ def validate_details(details, confirming=False):
         term = text(item.get("term"), "候选词", 200)
         if ident in ids: invalid("候选编号重复")
         ids.add(ident)
-        enumeration(item.get("source"), ("manual", "project_keyword"), "候选来源（外部提供方未配置）")
+        enumeration(item.get("source"), ("manual", "project_keyword", "model"), "候选来源")
+        enumeration(item.get("relation", "original"), guided.RELATIONS, "术语关系")
+        text(item.get("parent_keyword", term), "父关键词", 200)
+        if type(item.get("variant_selected", False)) is not bool: invalid("变体选择必须为布尔值")
         enumeration(item.get("decision"), ("pending", "accepted", "rejected", "replaced"), "候选决定")
         if item["decision"] == "replaced": term = text(item.get("replacement"), "替代词", 200)
         if item["decision"] in ("accepted", "replaced"):
@@ -119,9 +125,13 @@ def validate_details(details, confirming=False):
     excludes = {v.strip().casefold() for v in re.split(r"[,，;；\n]", answers.get("exclude", "")) if v.strip()}
     if includes & excludes: invalid("纳入与排除条件有重复，请修改冲突条件并记录解决说明")
     text(details.get("semantic_review", ""), "人工语义核查说明", 4000, required=confirming)
-    return {"answers": {key: answers.get(key, "").strip() for key in ANSWER_FIELDS},
+    result = {"answers": {key: answers.get(key, "").strip() for key in ANSWER_FIELDS},
             "candidates": deepcopy(candidates), "conflicts": deepcopy(conflicts),
             "semantic_review": details.get("semantic_review", "").strip()}
+    if details.get("schema_version") == 2:
+        result.update({key: deepcopy(details[key]) for key in ("schema_version", "research_fields", "boundary", "legacy_boundary", "legacy_boundary_reviewed", "suggestion_receipt", "criteria_id") if key in details})
+        result = guided.validate(result, confirming)
+    return result
 
 
 def scope_command(project, state, data):
@@ -132,23 +142,40 @@ def scope_command(project, state, data):
         if scope.status != "confirmed": raise BusinessError("SCOPE_NOT_CONFIRMED", "当前已是草稿", status=409)
         previous = scope
         scope = ResearchConstraint.objects.create(project=project, version=previous.version + 1, status="draft",
-            direction=previous.direction, core_keywords=deepcopy(previous.core_keywords), details=deepcopy(previous.details))
+            direction=previous.direction, core_keywords=deepcopy(previous.core_keywords), details=guided.upgrade(previous.details))
+        if scope.details.get('schema_version') == 2:
+            for field in scope.details['research_fields'].values():
+                if field.get('selected'):
+                    field['review_required'] = True
+            scope.save()
         create_dependencies(project, scope)
         invalidate_dependents(project, previous.id)
     else:
         if scope.status == "confirmed": raise BusinessError("SCOPE_IMMUTABLE", "已确认范围不可改写，请创建新草稿", status=409)
         proposed = validate_details(data.get("details", scope.details or initial_details(scope.core_keywords)), action == "confirm")
-        for collection, fixed_fields in (("candidates", ("term", "source")), ("conflicts", ("description",))):
+        if proposed.get('criteria_id') != scope.details.get('criteria_id'):
+            invalid('纳排版本引用不能通过范围表单更改')
+        if any(item.get('relation','original') != 'original' and item.get('parent_keyword') not in scope.core_keywords for item in proposed['candidates']):
+            invalid('扩展术语必须关联当前项目关键词')
+        from .suggestions import verify_selections
+        verify_selections(project, scope, proposed)
+        next_direction = text(data.get('direction',scope.direction), "研究方向", 2000)
+        if next_direction != scope.direction:
+            for field in proposed.get('research_fields',{}).values():
+                if field.get('selected'): field['review_required'] = True
+            if action == 'confirm' and any(field.get('review_required') for field in proposed.get('research_fields',{}).values()):
+                invalid('研究方向变化后请先保存并复核模型建议')
+        for collection, fixed_fields in (("candidates", ("term", "source", "relation", "parent_keyword", "reason")), ("conflicts", ("description",))):
             incoming = {item["id"]: item for item in proposed[collection]}
             for previous in scope.details.get(collection, []):
                 current = incoming.get(previous["id"])
                 if not current or any(current.get(field) != previous.get(field) for field in fixed_fields):
                     invalid("已有候选来源或矛盾记录不可删除、改写；请记录决定或解决说明")
             previous_ids = {item["id"] for item in scope.details.get(collection, [])}
-            if collection == "candidates" and any(item["id"] not in previous_ids and item["source"] != "manual" for item in proposed[collection]):
+            if collection == "candidates" and any(item["id"] not in previous_ids and item["source"] not in ("manual", "model") for item in proposed[collection]):
                 invalid("新候选只能声明为人工输入")
         scope.details = proposed
-        if "direction" in data: scope.direction = text(data["direction"], "研究方向", 2000)
+        if "direction" in data: scope.direction = next_direction
         if action == "confirm":
             scope.status, scope.confirmed_at = "confirmed", timezone.now()
         scope.save()

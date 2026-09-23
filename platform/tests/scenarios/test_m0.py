@@ -37,6 +37,9 @@ class M0Scenarios(TestCase):
         details = self.client.get(self.base + "/scope").json()["scope"]["details"]
         details["answers"] = {key: "complete" for key in ANSWER_FIELDS}
         details["answers"].update(years="2020—2026", include="experimental", exclude="reviews")
+        for key in ("object", "mechanism", "method", "outcome", "context"):
+            details["research_fields"][key] = {"status": "answered", "selected": [], "text": details["answers"][key]}
+        details["boundary"].update(start="2020-01-01", end="2026-12-31")
         for candidate in details["candidates"]: candidate["decision"] = "accepted"
         details["semantic_review"] = "Manually checked terms, dates and boundaries."
         return details
@@ -71,7 +74,7 @@ class M0Scenarios(TestCase):
 
     def test_scope_incomplete_duplicate_conflict_and_provenance_bypasses(self):
         self.assertEqual(self.post("/scope", {"action": "confirm", "expected_revision": 1}).status_code, 422)
-        for change in ({"candidates": []}, {"answers": {**self.details()["answers"], "years": "2027—2020"}}, {"answers": {**self.details()["answers"], "exclude": "experimental"}}):
+        for change in ({"candidates": []}, {"boundary": {**self.details()["boundary"], "start": "2027-01-01", "end": "2020-12-31"}}, {"answers": {**self.details()["answers"], "exclude": "experimental"}}):
             response = self.post("/scope", {"action": "confirm", "details": {**self.details(), **change}, "expected_revision": 1})
             self.assertEqual(response.status_code, 422, response.content)
         details = self.details(); details["conflicts"] = [{"id": "conflict-1", "description": "ambiguous", "resolution": ""}]

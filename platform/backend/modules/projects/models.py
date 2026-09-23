@@ -8,6 +8,7 @@ class Project(models.Model):
     name = models.CharField(max_length=200)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     revision = models.PositiveIntegerField(default=1)
+    external_processing_allowed = models.BooleanField(default=False)
     required_dependencies = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -94,3 +95,31 @@ class DependencyEdge(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=("project", "source_id", "target_id"), name="dependency_edge_once")]
+
+
+class SuggestionReceipt(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    fingerprint = models.CharField(max_length=64)
+    scope_id = models.UUIDField()
+    revision = models.PositiveIntegerField()
+    status = models.CharField(max_length=24, default='pending')
+    inputs = models.JSONField(default=dict)
+    result = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=('project','fingerprint'), name='project_suggestion_input_once')]
+
+
+class FeedbackObject(models.Model):
+    """Versioned project-local returns, populations, annotations and criteria receipts."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    kind = models.CharField(max_length=32)
+    identity = models.CharField(max_length=64)
+    content = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=('project','kind','identity'), name='project_feedback_identity_once')]

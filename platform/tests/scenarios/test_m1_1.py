@@ -16,6 +16,9 @@ def fixture(user, title=TITLE, keywords=None):
     details = initial_details(keywords or ["PSMB5", "铁死亡"])
     details["answers"] = {key: "人工确认" for key in ANSWER_FIELDS}
     details["answers"].update(years="2020—2026", include="原始研究", exclude="综述")
+    for key in ("object", "mechanism", "method", "outcome", "context"):
+        details["research_fields"][key] = {"status": "answered", "selected": [], "text": details["answers"][key]}
+    details["boundary"].update(start="2020-01-01", end="2026-12-31")
     details["semantic_review"] = "人工词义核对"
     for item in details["candidates"]: item["decision"] = "accepted"
     ResearchConstraint.objects.create(project=project, direction=title, core_keywords=keywords or ["PSMB5", "铁死亡"], details=details)

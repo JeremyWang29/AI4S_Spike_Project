@@ -2,8 +2,12 @@ from django.urls import path
 from modules.projects import views
 from modules.identity import views as identity
 from modules.retrieval import views as retrieval
+from modules.projects import suggestions, feedback
 
 urlpatterns = [
+    path("api/v1/projects/<uuid:project_id>/scope/suggestions", suggestions.recommend),
+    path("api/v1/projects/<uuid:project_id>/scope/external-processing", suggestions.external_processing),
+    path("api/v1/projects/<uuid:project_id>/feedback", feedback.endpoint),
     path("api/v1/projects/<uuid:project_id>/search-plans", retrieval.collection),
     path("api/v1/search-plans/<uuid:plan_id>", retrieval.detail),
     path("api/v1/health", views.health),

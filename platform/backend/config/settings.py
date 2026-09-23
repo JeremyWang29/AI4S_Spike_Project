@@ -71,3 +71,5 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "EXCEPTION_HANDLER": "config.errors.exception_handler",
 }
+
+AI4S_SCOPE_PROVIDER = {"url": os.getenv("AI4S_SCOPE_PROVIDER_URL", ""), "model": os.getenv("AI4S_SCOPE_PROVIDER_MODEL", ""), "key": os.getenv("AI4S_SCOPE_PROVIDER_KEY", ""), "timeout": int(os.getenv("AI4S_SCOPE_PROVIDER_TIMEOUT", "20")), "max_bytes": int(os.getenv("AI4S_SCOPE_PROVIDER_MAX_BYTES", "65536")), "quota": int(os.getenv("AI4S_SCOPE_PROVIDER_QUOTA", "20"))}
