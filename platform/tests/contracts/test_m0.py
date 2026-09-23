@@ -18,7 +18,11 @@ class DeploymentContractTests(TestCase):
     def test_nondevelopment_missing_secret_fails_closed(self):
         env = {**os.environ, "AI4S_ENV": "acceptance", "AI4S_SECRET_KEY": ""}
         backend = Path(__file__).resolve().parents[2] / "backend"
-        result = subprocess.run([sys.executable, "manage.py", "check"], cwd=backend, env=env, capture_output=True, text=True)
+        result = subprocess.run(
+            [sys.executable, "manage.py", "check"],
+            cwd=backend, env=env, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("AI4S_SECRET_KEY", result.stderr)
 
