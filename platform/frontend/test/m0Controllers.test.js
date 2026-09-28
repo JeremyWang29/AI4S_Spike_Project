@@ -27,6 +27,35 @@ test('known same-project revision updates next scope command',async()=>{
  const c=scopeController({api:{scope:async()=>result(1),scopeCommand:async(id,input)=>{body=input;return result(3)}},project:()=>({id:'a'}),emit:()=>{}})
  await c.load();c.syncRevision(2);await c.command('save');assert.equal(body.expected_revision,2)
 })
+test('suggestions require a saved scope and permission changes do not generate automatically',async()=>{
+ let calls=0
+ const api={scope:async()=>result(1),suggestions:async()=>{calls++;return {status:'ready',result:{terms:[]},id:'receipt'}},
+  externalProcessing:async()=>({...result(2),external_processing_allowed:true,providers:{ai:'AVAILABLE',knowledge_graph:'NO_COVERAGE'}})}
+ const c=scopeController({api,project:()=>({id:'a'}),emit:()=>{}})
+ await c.load();assert.equal(calls,0)
+ c.details.value.answers.object='edited';c.changed();await c.recommend()
+ assert.equal(calls,0);assert.equal(c.error.value.code,'UNSAVED_SCOPE')
+ await c.setExternal(true);assert.equal(calls,0)
+})
+test('ready suggestions enter the saved scope draft for individual review',async()=>{
+ const term={id:'graph-term-1',term:'ferroptosis',source:'graph',parent_keyword:'铁死亡',decision:'pending'}
+ const api={scope:async()=>result(1),suggestions:async()=>({id:'receipt-1',status:'ready',result:{terms:[term]}})}
+ const c=scopeController({api,project:()=>({id:'a'}),emit:()=>{}})
+ await c.load();await c.recommend()
+ assert.equal(c.details.value.suggestion_receipt,'receipt-1')
+ assert.deepEqual(c.details.value.candidates,[term])
+ assert.equal(c.dirty.value,true)
+})
+test('new relation disagreement flags a previously saved candidate too',async()=>{
+ const old={id:'old',term:'ferroptosis',parent_keyword:'铁死亡',relation:'related',source:'model',decision:'accepted'}
+ const newer={id:'new',term:'ferroptosis',parent_keyword:'铁死亡',relation:'synonym',source:'model',decision:'pending'}
+ const api={scope:async()=>({...result(1),scope:{status:'draft',details:{answers:{},candidates:[old],conflicts:[]}}}),
+  suggestions:async()=>({id:'receipt-2',status:'ready',result:{terms:[newer]}})}
+ const c=scopeController({api,project:()=>({id:'a'}),emit:()=>{}})
+ await c.load();await c.recommend()
+ assert.equal(c.details.value.candidates[0].conflict,true)
+ assert.equal(c.details.value.candidates[1].conflict,true)
+})
 test('feedback mutation refreshes the authoritative scope before notifying parent',async()=>{
  const events=[],calls=[],api={
   feedback:async()=>({project_id:'a',project_revision:calls.includes('write')?2:1,items:[]}),

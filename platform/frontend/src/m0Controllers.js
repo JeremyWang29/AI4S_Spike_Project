@@ -9,7 +9,7 @@ export function scopeController({api,project,emit,drafts={}}){
   const current=ticket=>active&&gate.current(ticket,project().id)
   function changed(){dirty.value=true;saved.value=false}
   function remember(){if(data.value&&dirty.value) drafts[project().id]={details:clone(details.value),data:clone(data.value),attempt}}
-  function apply(result){data.value=result;details.value=clone(result.scope.details);dirty.value=false;saved.value=true;attempt=null;delete drafts[project().id];emit('saved',result)}
+  function apply(result){data.value=result;details.value=clone(result.scope.details);suggestions.value=null;dirty.value=false;saved.value=true;attempt=null;delete drafts[project().id];emit('saved',result)}
   async function load(restore=false){
     const id=project().id,ticket=gate.begin(id);busy.value=true;error.value=null
     try{
@@ -23,14 +23,17 @@ export function scopeController({api,project,emit,drafts={}}){
     if(busy.value||!data.value)return
     const id=project().id,ticket=gate.begin(id);busy.value=true;error.value=null
     try{
-      const input={action,expected_revision:data.value.project_revision,...(action==='edit'?{}:{details:clone(details.value)})}
+      const input={action,expected_revision:data.value.project_revision,...(action==='edit'?{}:{details:clone(details.value),...(data.value.scope.core_keywords?{core_keywords:clone(data.value.scope.core_keywords)}:{})})}
       attempt=creationAttempt(attempt,input)
       const result=await api.scopeCommand(id,input,attempt.key)
       if(current(ticket))apply(result)
     }catch(e){if(current(ticket)){error.value=e;saved.value=false}}finally{if(current(ticket))busy.value=false}
   }
   async function recommend(regenerate=false){
-    if(busy.value||!data.value||!api.suggestions)return
+    if(busy.value||!data.value||!api.suggestions||dirty.value||data.value.scope?.status!=='draft'){
+      if(dirty.value)error.value={code:'UNSAVED_SCOPE',message:'请先保存五项研究内容，再生成候选词'}
+      return
+    }
     const id=project().id,ticket=gate.begin(id);busy.value=true;error.value=null
     try{
       const result=await api.suggestions(id,{expected_revision:data.value.project_revision,...(regenerate?{regenerate_key:crypto.randomUUID()}:{})})
@@ -39,22 +42,33 @@ export function scopeController({api,project,emit,drafts={}}){
       if(result.status==='ready'){
         details.value.suggestion_receipt=result.id
         for(const term of result.result.terms)if(!details.value.candidates.some(t=>t.id===term.id))details.value.candidates.push(clone(term))
+        const surfaces=new Map()
+        for(const term of details.value.candidates){
+          const key=`${term.parent_keyword?.toLocaleLowerCase()}|${term.term?.toLocaleLowerCase()}`
+          const group=surfaces.get(key)||[];group.push(term);surfaces.set(key,group)
+        }
+        for(const group of surfaces.values()){
+          const relations=new Set(group.map(term=>term.relation))
+          const graphConcepts=new Set(group.filter(term=>term.source==='graph').map(term=>`${term.concept_id}|${term.relation}`))
+          if(relations.size>1||graphConcepts.size>1)for(const term of group)term.conflict=true
+        }
         changed()
       }
     }catch(e){if(current(ticket))error.value=e}finally{if(current(ticket))busy.value=false}
   }
   async function setExternal(allowed){
-    if(busy.value||!data.value)return
+    if(busy.value||!data.value||dirty.value){
+      if(dirty.value)error.value={code:'UNSAVED_SCOPE',message:'请先保存范围修改，再更改外部处理许可'}
+      return
+    }
     const id=project().id,ticket=gate.begin(id);busy.value=true;error.value=null
-    let generate=false
     try{
       const result=await api.externalProcessing(id,{allowed,expected_revision:data.value.project_revision},crypto.randomUUID())
       if(!current(ticket))return
-      data.value={...data.value,external_processing_allowed:result.external_processing_allowed,providers:result.providers,project_revision:result.project_revision}
+      data.value={...data.value,scope:result.scope,external_processing_allowed:result.external_processing_allowed,providers:result.providers,project_revision:result.project_revision}
+      details.value=clone(result.scope.details);suggestions.value=null
       emit('saved',result)
-      generate=allowed
     }catch(e){if(current(ticket))error.value=e}finally{if(current(ticket))busy.value=false}
-    if(generate&&current(ticket))await recommend()
   }
   function selectOption(field,option,selected){
     const value=details.value.research_fields[field]

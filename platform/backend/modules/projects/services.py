@@ -36,9 +36,18 @@ def read_scope(project):
     versions = list(project.constraints.order_by("-version"))
     from .suggestions import config
     provider = config()
-    return {"project_id": str(project.id), "external_processing_allowed": project.external_processing_allowed, "scope": scope_payload(versions[0]) if versions else None, "history": [scope_payload(item) for item in versions],
+    from modules.knowledge.services import graph_terms_for, graph_candidate_is_current
+    graph_available = bool(versions and graph_terms_for(project.id, versions[0].core_keywords))
+    current = scope_payload(versions[0]) if versions else None
+    if current and current['status'] == 'draft':
+        current = deepcopy(current)
+        graph_rows = graph_terms_for(project.id, current['core_keywords'])
+        for candidate in current['details'].get('candidates', []):
+            if candidate.get('source') == 'graph' and not graph_candidate_is_current(candidate, graph_rows):
+                candidate['review_required'] = True
+    return {"project_id": str(project.id), "external_processing_allowed": project.external_processing_allowed, "scope": current, "history": [scope_payload(item) for item in versions],
             "project_revision": project.revision, "groups": QUESTION_GROUPS,
-            "providers": {"ai": "UNCONFIGURED" if not all(provider.get(k) for k in ('url','model','key')) else ('AVAILABLE' if project.external_processing_allowed else 'DENIED'), "knowledge_graph": "UNCONFIGURED"}}
+            "providers": {"ai": "UNCONFIGURED" if not all(provider.get(k) for k in ('url','model','key')) else ('AVAILABLE' if project.external_processing_allowed else 'DENIED'), "knowledge_graph": "AVAILABLE" if graph_available else "NO_COVERAGE"}}
 
 
 def confirmed_scope_dto(project):
@@ -103,15 +112,26 @@ def validate_details(details, confirming=False):
         term = text(item.get("term"), "候选词", 200)
         if ident in ids: invalid("候选编号重复")
         ids.add(ident)
-        enumeration(item.get("source"), ("manual", "project_keyword", "model"), "候选来源")
+        enumeration(item.get("source"), ("manual", "project_keyword", "model", "graph"), "候选来源")
         enumeration(item.get("relation", "original"), guided.RELATIONS, "术语关系")
         text(item.get("parent_keyword", term), "父关键词", 200)
         if type(item.get("variant_selected", False)) is not bool: invalid("变体选择必须为布尔值")
+        if type(item.get('review_required', False)) is not bool or type(item.get('conflict', False)) is not bool: invalid('复核状态无效')
+        if item.get('source') == 'graph':
+            for key, limit in (('concept_id',200),('source_position',500),('definition',4000),('graph_version',120),('license',200)):
+                text(item.get(key), key, limit, required=key!='definition')
+        if item.get('source') == 'model': text(item.get('source_position',''), '模型输出定位', 500, False)
         enumeration(item.get("decision"), ("pending", "accepted", "rejected", "replaced"), "候选决定")
+        if item['source'] == 'project_keyword' and item['decision'] == 'replaced': invalid('原始关键词请在范围草稿中修改')
+        if confirming and item.get('review_required') and item['decision'] in ('accepted','replaced'): invalid('候选词变化后请逐项复核')
+        if confirming and item.get('conflict') and item['decision'] in ('accepted','replaced'):
+            if not item.get('relation_reviewed'): invalid('冲突或歧义须人工核查关系')
+            text(item.get('relation_review_reason',''), '关系核查理由', 2000)
         if item["decision"] == "replaced": term = text(item.get("replacement"), "替代词", 200)
         if item["decision"] in ("accepted", "replaced"):
-            if term.casefold() in terms: invalid("已接受候选词重复，请合并或拒绝重复项")
-            terms.add(term.casefold())
+            term_key=(item.get('parent_keyword',term).casefold(),term.casefold())
+            if term_key in terms: invalid("同一原关键词下已接受候选词重复，请核查歧义或拒绝重复项")
+            terms.add(term_key)
         if confirming and item["decision"] == "pending": invalid("请处理所有候选词")
     conflict_ids = set()
     for item in conflicts:
@@ -147,6 +167,9 @@ def scope_command(project, state, data):
             for field in scope.details['research_fields'].values():
                 if field.get('selected'):
                     field['review_required'] = True
+            for candidate in scope.details.get('candidates', []):
+                if candidate.get('source') in ('graph', 'model'):
+                    candidate['review_required'] = True
             scope.save()
         create_dependencies(project, scope)
         invalidate_dependents(project, previous.id)
@@ -155,27 +178,72 @@ def scope_command(project, state, data):
         proposed = validate_details(data.get("details", scope.details or initial_details(scope.core_keywords)), action == "confirm")
         if proposed.get('criteria_id') != scope.details.get('criteria_id'):
             invalid('纳排版本引用不能通过范围表单更改')
-        if any(item.get('relation','original') != 'original' and item.get('parent_keyword') not in scope.core_keywords for item in proposed['candidates']):
+        next_keywords = data.get('core_keywords', scope.core_keywords)
+        if not isinstance(next_keywords, list) or not next_keywords or any(not isinstance(k, str) or not k.strip() or len(k)>200 for k in next_keywords) or len(set(k.casefold() for k in next_keywords)) != len(next_keywords):
+            invalid('项目关键词无效')
+        if any(item.get('relation','original') != 'original' and item.get('parent_keyword') not in next_keywords and item['decision'] != 'rejected' for item in proposed['candidates']):
             invalid('扩展术语必须关联当前项目关键词')
-        from .suggestions import verify_selections
+        from .suggestions import verify_selections, reconcile
         verify_selections(project, scope, proposed)
+        reconcile(proposed['candidates'])
+        if action == 'confirm' and any(c.get('conflict') and c['decision'] in ('accepted','replaced') and
+                (not c.get('relation_reviewed') or not str(c.get('relation_review_reason','')).strip())
+                for c in proposed['candidates']):
+            invalid('同形异义或关系冲突须先保存并逐项核查')
+        from modules.knowledge.services import graph_terms_for, graph_candidate_is_current
+        graph_rows = graph_terms_for(project.id, next_keywords)
+        for candidate in proposed['candidates']:
+            if candidate.get('source') == 'graph' and not graph_candidate_is_current(candidate, graph_rows):
+                candidate['review_required'] = True
+                if action == 'confirm' and candidate['decision'] in ('accepted','replaced'):
+                    invalid('图谱版本或权限变化后请复核候选词')
         next_direction = text(data.get('direction',scope.direction), "研究方向", 2000)
-        if next_direction != scope.direction:
+        changed_fields = next_direction != scope.direction or next_keywords != scope.core_keywords or any(
+            proposed.get('research_fields',{}).get(key,{}).get(part) != scope.details.get('research_fields',{}).get(key,{}).get(part)
+            for key in guided.FIELDS for part in ('status','text'))
+        if changed_fields:
             for field in proposed.get('research_fields',{}).values():
                 if field.get('selected'): field['review_required'] = True
-            if action == 'confirm' and any(field.get('review_required') for field in proposed.get('research_fields',{}).values()):
-                invalid('研究方向变化后请先保存并复核模型建议')
-        for collection, fixed_fields in (("candidates", ("term", "source", "relation", "parent_keyword", "reason")), ("conflicts", ("description",))):
+            for candidate in proposed['candidates']:
+                if candidate.get('source') in ('model','graph'):
+                    candidate['review_required'] = True
+            if action == 'confirm' and (any(field.get('review_required') for field in proposed.get('research_fields',{}).values()) or any(c.get('review_required') for c in proposed['candidates'])):
+                invalid('范围变化后请先保存并逐项复核建议')
+        if action == 'confirm' and next_keywords != scope.core_keywords:
+            invalid('请先保存关键词修改，再确认范围')
+        if action == 'confirm' and any(c['source']=='project_keyword' and c['term'] not in next_keywords and c['decision']!='rejected' for c in proposed['candidates']):
+            invalid('已移除原关键词须明确拒绝')
+        if action == 'confirm' and any(not any(
+            c['source'] == 'project_keyword' and c['term'] == keyword and c['decision'] == 'accepted'
+            for c in proposed['candidates']) for keyword in next_keywords):
+            invalid('当前项目关键词须逐条接受；如需删除请先修改范围草稿')
+        added_keyword_ids = set()
+        if next_keywords != scope.core_keywords:
+            existing = {c['term'].casefold() for c in proposed['candidates'] if c['source'] == 'project_keyword'}
+            for keyword in next_keywords:
+                if keyword.casefold() not in existing:
+                    ident = str(uuid.uuid4())
+                    added_keyword_ids.add(ident)
+                    proposed['candidates'].append({'id':ident,'term':keyword,
+                        'source':'project_keyword','decision':'pending','replacement':'',
+                        'relation':'original','parent_keyword':keyword,'variant_selected':False})
+            for candidate in proposed['candidates']:
+                if candidate['source']=='project_keyword' and candidate['term'] not in next_keywords:
+                    candidate['review_required']=True
+        for collection, fixed_fields in (("candidates", ("term", "source", "relation", "parent_keyword", "reason", "concept_id", "source_position", "definition", "graph_version", "license", "external_sharing_allowed")), ("conflicts", ("description",))):
             incoming = {item["id"]: item for item in proposed[collection]}
             for previous in scope.details.get(collection, []):
                 current = incoming.get(previous["id"])
                 if not current or any(current.get(field) != previous.get(field) for field in fixed_fields):
                     invalid("已有候选来源或矛盾记录不可删除、改写；请记录决定或解决说明")
             previous_ids = {item["id"] for item in scope.details.get(collection, [])}
-            if collection == "candidates" and any(item["id"] not in previous_ids and item["source"] not in ("manual", "model") for item in proposed[collection]):
+            if collection == "candidates" and any(item["id"] not in previous_ids and item["id"] not in added_keyword_ids and item["source"] not in ("manual", "model", "graph") for item in proposed[collection]):
                 invalid("新候选只能声明为人工输入")
+            if collection == "candidates" and any(item["id"] not in previous_ids and item["source"] == "manual" and item.get("relation") == "original" for item in proposed[collection]):
+                invalid("原始关键词请在范围草稿中修改；人工候选请选择派生词关系")
         scope.details = proposed
         if "direction" in data: scope.direction = next_direction
+        if next_keywords != scope.core_keywords: scope.core_keywords = next_keywords
         if action == "confirm":
             scope.status, scope.confirmed_at = "confirmed", timezone.now()
         scope.save()
