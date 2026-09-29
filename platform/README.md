@@ -2,6 +2,8 @@
 
 正式研发工程位于本目录；旧 `../ai4s-research-decision-platform/` 仅作为只读迁移来源。
 
+新增开发和代码评审遵循[研发代码质量与交付规范](docs/DEVELOPMENT_STANDARDS.md)；该规范区分当前已可运行的检查和待建设的自动化门槛。
+
 ## 本地验证
 
 后端使用 Python 3.12。进入仓库根目录后运行：
