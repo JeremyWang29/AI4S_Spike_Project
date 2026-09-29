@@ -66,7 +66,7 @@ erDiagram
 | EvidenceUnit | source_record_version、file_version、page、text_span／人工定位、quotation、上下文、coverage_status、extraction_version、review_status |
 | ClaimVersion | 主体、关系、客体、条件、方向／不确定性、证据引用；共现／引文关系与机制／因果分型 |
 | GoldPartition | 范围、去重单元、冻结标签版、分组、材料暴露状态、封存评估ID、退役事件；同研究重复版本不得跨调优／验收分组 |
-| GoldHitObservation | record_id、query_run_id、subquery_id、hit/miss/unknown、核验方法、身份匹配、原查询依据与时间 |
+| GoldHitObservation | record_id、query_run_id、subquery_id、hit/verified_miss/unknown、核验方法、身份匹配、原查询依据、核验人及时间；部分导出缺失不得自动生成verified_miss |
 | ResultPopulationVersion | kind（single_run/composite）、evaluation_scope_version、source_population_versions、set_ast、record_unit、completeness_assessment；单执行保留query_run_id、expected_hit_count、imported_count、batch_ids、dedupe_version、stable_id_coverage、export_complete、warnings、fingerprint；只有核验合格的总体可作正式抽样框 |
 | PrecisionSamplingPolicyVersion | status、record_type、population_range、confidence_level、margin_of_error、conservative_prior、finite_population_correction、strata、minimum_effective_labels、pending_rule、fixtures、approved_by/at |
 | ResultPrecisionSampleVersion | result_population_id、policy_version、sampling_frame、strata、random_seed、sample_ids、weights、required/effective_count、frozen_at；冻结后不换样凑指标 |
@@ -168,3 +168,9 @@ erDiagram
 `SearchOptimizationPolicyVersion`由`retrieval`唯一写入，至少含`task_id`、`baseline_query_version`、`baseline_evaluation_ref`、`scope_ref`、`platform_rule_ref`、`tuning_gold_ref`、`precision_method_ref`、`max_recall_drop_pp`、`min_precision_gain_pp`、`confirmed_by`、`confirmed_at`、`revision`。两个阈值须为用户明确提交的非负百分点；空值不可用，客户端不得自行指定已确认标识。`QueryOptimizationTrial`只保存对`evaluation.EvaluationRun`的引用和由该指标算出的比较、平台复杂度报告及决策，不复制可被改写的评估真值。所有指标变化以百分点为单位，使用未舍入原值比较。
 
 接口语义为“读取任务当前基线与建议候选”“确认／改版取舍阈值”“提交候选查询与实际执行引用”“读取试验对比”“确认或拒绝候选”。写命令均要求项目成员权限、幂等键、预期revision、已确认范围和方案版本；首个`NOT`候选比较须有已确认阈值。阈值改版返回新版本，不覆盖既有试验；范围／平台／Gold／查准方法发生变化时返回409及失效原因，先重建基线再确认。响应分开返回“符合调优取舍”“可正式验收”“实际验收通过”三种语义，不以用户确认阈值推断最终通过。
+
+## 26. T1.7 查全评估对象与接口
+
+`RecallEvaluationScopeVersion`由`evaluation`写入并绑定已确认研究范围、纳排标准、平台／子库、文献或专利去重单元、联合集合树、Gold版本、查询与执行引用；`SourceCoverageObservation`按Gold单元及平台记录`indexed/not_indexed/unknown`、核验依据、人、时间。`GoldHitObservation`继续只说明**原式命中**，不与平台收录混用。Gold记录须保留发现路径及`query_conditioned`标识；受当前式限制的集合不能获得独立验收资格。
+
+Gold候选导入／标注／冻结、按原式提交逐条命中核验、提交收录核验、读取查全报告均由`evaluation`接口负责；写命令用角色校验、幂等键、预期revision和凭据引用，不能由客户端直接提交最终查全率。报告返回总Gold及两组正负例数、相关正例分母、TP、按已收录漏检／未收录／收录未知拆分的FN、命中未知数、范围级查全率及区间、可计算时的平台内诊断查全率、执行与来源覆盖限制。任何必要命中未知或受保护包暴露均给不可验收状态；独立包失效后新建版本，不覆写历史。
