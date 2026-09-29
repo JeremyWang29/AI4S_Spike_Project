@@ -4,12 +4,12 @@ type: architecture-spine
 purpose: build-substrate
 altitude: initiative
 paradigm: modular-monolith-with-ports-and-adapters
-scope: 产品V0.13首版的所有研发模块和运行边界
+scope: 产品V0.18首版的所有研发模块和运行边界
 status: final
 created: 2026-09-09
-updated: 2026-09-23
+updated: 2026-09-29
 binds: [all]
-sources: [产品设计方案V0.12, 用户Q1-Q21决策, V0.12同步Q1-Q4确认]
+sources: [产品设计方案V0.18, 用户Q1-Q21决策, V0.12同步Q1-Q4确认]
 companions: [技术方案.md, 技术决策记录.md, 验收与实施映射.md]
 ---
 
@@ -37,7 +37,7 @@ flowchart LR
 
 - **Binds:** all。
 - **Prevents:** 旧MVP的全局冻结和旧指标规则进入新系统。
-- **Rule:** 产品V0.12优先；登录、建项、范围、文献、专利、候选、决策包和贡献按显式依赖推进，requiredDependencies决定局部门槛。不可变历史审批、当前适用性和新版本状态分别保存；新版本不改写旧批准，已知错误追加需复核／撤销事件。
+- **Rule:** 现行产品V0.18优先；登录、建项、范围、文献、专利、候选、决策包和贡献按显式依赖推进，requiredDependencies决定局部门槛。不可变历史审批、当前适用性和新版本状态分别保存；新版本不改写旧批准，已知错误追加需复核／撤销事件。
 
 ### AD-2 — 数据所有权和唯一状态决定者
 

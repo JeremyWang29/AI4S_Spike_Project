@@ -1,0 +1,13 @@
+{
+  "date": "2026-09-29",
+  "product_version": "V0.18",
+  "technical_version": "T1.8",
+  "documents_checked": 35,
+  "local_links_checked": 563,
+  "stable_anchors_checked": 290,
+  "product_scenarios": 55,
+  "technical_scenarios": 59,
+  "errors": [],
+  "status": "passed",
+  "scope": "Static documentation checks only; no software or live retrieval acceptance executed."
+}
