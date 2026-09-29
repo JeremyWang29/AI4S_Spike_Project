@@ -9,8 +9,8 @@ review_loop_iteration: 1
 implementation_status: complete
 acceptance_status: pending-environment
 context:
-  - '{project-root}/outputs/architecture/architecture-ai4s-2026-09-09/ARCHITECTURE-SPINE.md'
-  - '{project-root}/outputs/development-plan/ai4s-staged-development-20260911/分阶段开发计划.md'
+  - '{project-root}/AI4S_project/outputs/architecture/architecture-ai4s-2026-09-09/ARCHITECTURE-SPINE.md'
+  - '{project-root}/AI4S_project/outputs/development-plan/ai4s-staged-development-20260911/分阶段开发计划.md'
 ---
 
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">

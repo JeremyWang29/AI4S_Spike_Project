@@ -1,0 +1,97 @@
+{
+  "date": "2026-09-16",
+  "kind": "document_static_checks_only",
+  "product_version": "V0.12",
+  "technical_version": "T1.2",
+  "documents": [
+    {
+      "file": "outputs/architecture/architecture-ai4s-2026-09-09/技术方案.md",
+      "lines": 526,
+      "sha256": "294c4bd6abc1a811f16e59143bc54ea7219c91b9ca9b0c682dde13d72e78ae7f",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "outputs/architecture/architecture-ai4s-2026-09-09/ARCHITECTURE-SPINE.md",
+      "lines": 232,
+      "sha256": "e9d80e7f07b417229b758dd0754a795f1520b14a3240cb1d69c0c9c3549dd6fe",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "outputs/architecture/architecture-ai4s-2026-09-09/技术决策记录.md",
+      "lines": 89,
+      "sha256": "7b9693209370e6f9b31c48b1d709047e7f7e04d028a4b6d21277bad44f3c4616",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "outputs/architecture/architecture-ai4s-2026-09-09/验收与实施映射.md",
+      "lines": 127,
+      "sha256": "a269018f7f840a2abd42adbe178201ee37ea86293248c29a30cd2b3b9d578886",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "outputs/architecture/architecture-ai4s-2026-09-09/README.md",
+      "lines": 22,
+      "sha256": "2b30c72f95ed2d61a9841fe1c6054052a99cca880ea417748cdb97ef198a7507",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "outputs/architecture/architecture-ai4s-2026-09-09/交付检查记录.md",
+      "lines": 19,
+      "sha256": "59876f8e6e06f4e9eae97d128aa57bf9fe880d84f7dcda1f2fe7ae6e4450dfcc",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md",
+      "lines": 127,
+      "sha256": "54cdd3ebc2bfdd702fbadc735d31fe856890dca029a8c06f66dd64f96a4d9143",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "outputs/development-plan/ai4s-staged-development-20260911/分阶段开发计划.md",
+      "lines": 330,
+      "sha256": "f2baeb623eb6b3e61c57d0a48062ca214a1119eb858d22978447d2d4d56cfa99",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "_bmad-output/implementation-artifacts/spec-v012-search-plan-interview.md",
+      "lines": 58,
+      "sha256": "4d38c22e47350457627256869c44a7bc194e507bd1ba4ae1fb45d9b3daf0b1cb",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    }
+  ],
+  "product_scenarios": 28,
+  "technical_scenarios": 37,
+  "unique_scenarios": 65,
+  "architecture_rules": 20,
+  "numbering_contiguous": true,
+  "implementation_tests_run": false,
+  "real_pilot_run": false,
+  "independent_bmad_review_run": false
+}

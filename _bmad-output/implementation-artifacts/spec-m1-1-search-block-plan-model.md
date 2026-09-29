@@ -10,10 +10,10 @@ acceptance_status: 'technical-pass-awaiting-user'
 stage: 'M1.1'
 source_spec: 'spec-v012-search-plan-interview.md'
 context:
-  - 'outputs/research-platform-design-20260907/产品设计方案.md'
-  - 'outputs/research-platform-design-20260907/检索方案示例_PSMB5_方向确认稿_20260916.md'
-  - 'outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md'
-  - 'outputs/development-plan/ai4s-staged-development-20260911/分阶段开发计划.md'
+  - 'AI4S_project/outputs/research-platform-design-20260907/产品设计方案.md'
+  - 'AI4S_project/outputs/research-platform-design-20260907/检索方案示例_PSMB5_方向确认稿_20260916.md'
+  - 'AI4S_project/outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md'
+  - 'AI4S_project/outputs/development-plan/ai4s-staged-development-20260911/分阶段开发计划.md'
 ---
 
 # M1.1：检索块与方案数据模型

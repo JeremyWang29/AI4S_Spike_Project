@@ -1,0 +1,65 @@
+{
+  "date": "2026-09-10",
+  "kind": "document_static_checks_only",
+  "documents": [
+    {
+      "file": "技术方案.md",
+      "lines": 453,
+      "sha256": "7E49853D3380733D4FC243EAE338C5988EA2E81DB78B47379484E70DF0F465DA",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "技术决策记录.md",
+      "lines": 54,
+      "sha256": "D96D65229E36CFFC35470EFA6F3622A4B09BDA76F2EEED65DBB915D2CB945ADF",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "交付检查记录.md",
+      "lines": 41,
+      "sha256": "7AC22A873465FAB3CAE7C54D9D2E03457DBBF8E7FCF1C34820AB481C26F5F652",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "验收与实施映射.md",
+      "lines": 77,
+      "sha256": "3A56EEEF318F0579F896C31D3D2E66F77E525F863B3348E59777FCBC718381CF",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "ARCHITECTURE-SPINE.md",
+      "lines": 207,
+      "sha256": "B14BEBE6B6B9D59C6C79623665D45DAFEE3C10CA3D601756171AABCC5AB29285",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    },
+    {
+      "file": "README.md",
+      "lines": 19,
+      "sha256": "27E02103ED6CE7C80A5DA14DA98A9046D002F348573916F9A2CB9AE0D996E435",
+      "fences_balanced": true,
+      "table_errors": [],
+      "link_errors": [],
+      "duplicate_headings": 0
+    }
+  ],
+  "product_scenarios": 16,
+  "technical_scenarios": 21,
+  "unique_scenarios": 37,
+  "implementation_tests_run": false,
+  "real_pilot_run": false
+}

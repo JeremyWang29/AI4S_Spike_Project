@@ -7,9 +7,9 @@ route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: 'eede881651ab3858e482bb0bb3f50785ff617ad4'
 context:
-  - 'outputs/research-platform-design-20260907/产品设计方案.md'
-  - 'outputs/architecture/architecture-ai4s-2026-09-09/ARCHITECTURE-SPINE.md'
-  - 'outputs/architecture/architecture-ai4s-2026-09-09/验收与实施映射.md'
+  - 'AI4S_project/outputs/research-platform-design-20260907/产品设计方案.md'
+  - 'AI4S_project/outputs/architecture/architecture-ai4s-2026-09-09/ARCHITECTURE-SPINE.md'
+  - 'AI4S_project/outputs/architecture/architecture-ai4s-2026-09-09/验收与实施映射.md'
 ---
 
 <frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">

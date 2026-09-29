@@ -7,10 +7,10 @@ implementation_status: 'not-started'
 acceptance_status: 'not-run'
 stages: [M1, M2]
 context:
-  - 'outputs/research-platform-design-20260907/产品设计方案.md'
-  - 'outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md'
-  - 'outputs/architecture/architecture-ai4s-2026-09-09/验收与实施映射.md'
-  - 'outputs/development-plan/ai4s-staged-development-20260911/分阶段开发计划.md'
+  - 'AI4S_project/outputs/research-platform-design-20260907/产品设计方案.md'
+  - 'AI4S_project/outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md'
+  - 'AI4S_project/outputs/architecture/architecture-ai4s-2026-09-09/验收与实施映射.md'
+  - 'AI4S_project/outputs/development-plan/ai4s-staged-development-20260911/分阶段开发计划.md'
 ---
 
 # V0.12待开发增量规格
@@ -19,11 +19,11 @@ context:
 
 产品V0.12要求从标题、关键词和已确认范围自动拆检索块，经过类似grill-me的决策追问，再由用户确认方案与当前批次，随后生成各平台检索式。回传结果触发有依据的修订；多任务按预先固定的评估范围合并，继续维持Gold与独立验收规则。
 
-本轮Q1—Q4已确认文档同步范围与上述设计方向。此文为后续实现拆分输入，尚未经过整体实现规格评审。用户于2026-09-17确认M0验收，首个可开发任务已拆为[spec-m1-1-search-block-plan-model.md](./spec-m1-1-search-block-plan-model.md)；M1.2—M2.2仍待逐项拆分和验收。M0、已完成交互预览及早期建项规格保持历史范围；不修改它们的冻结验收条款。旧总规格未实现的检索工作采用此增量及当前开发计划，旧代码不作为新规则真值。
+本轮Q1—Q4已确认文档同步范围与上述设计方向。此文为后续实现拆分输入，尚未经过整体实现规格评审。用户于2026-09-17确认M0验收，首个可开发任务已拆为[spec-m1-1-search-block-plan-model.md](spec-m1-1-search-block-plan-model.md)；M1.2—M2.2仍待逐项拆分和验收。M0、已完成交互预览及早期建项规格保持历史范围；不修改它们的冻结验收条款。旧总规格未实现的检索工作采用此增量及当前开发计划，旧代码不作为新规则真值。
 
 ## 实现顺序
 
-1. M1.1建立retrieval拥有的SearchPlan、SearchBlock、SearchPlanTask／Batch和生命科学模板，读取projects范围及knowledge候选DTO，校验引用／依赖环；具体任务与验收见[独立规格](./spec-m1-1-search-block-plan-model.md)。
+1. M1.1建立retrieval拥有的SearchPlan、SearchBlock、SearchPlanTask／Batch和生命科学模板，读取projects范围及knowledge候选DTO，校验引用／依赖环；具体任务与验收见[独立规格](spec-m1-1-search-block-plan-model.md)。
 2. M1.2实现问题前沿、问题版本／展示快照、结构化答案及自由文本待确认映射、暂停恢复、批量采纳、最终确认和依赖影响。八步导航内增加2A／2B，三种通过状态分别展示。
 3. M1.3在统一模型网关增加三类候选任务，执行前核验许可、保护集、缓存、预算；规则与人工路径先可用，模型失败不丢答案或自动批准。
 4. M1.4将已确认方案、任务和批次绑定QueryBundleVersion／CompiledQuery／SearchRun；平台编译保真、手工执行与ImportBatch回传、单执行总体。新增结构兼容历史读，无方案旧查询不自动获准。
@@ -41,7 +41,7 @@ context:
 
 ## 契约与验收
 
-数据字段、API、状态、并发／缓存键和事件以[规范附件](../../outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md)为准；不在规格中复制第二套状态机。Gold≥50与两阶段双指标≥0.85按每个声明范围执行，独立材料不进入追问／找词／调优，暴露整包转调优。
+数据字段、API、状态、并发／缓存键和事件以[规范附件](../../AI4S_project/outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md)为准；不在规格中复制第二套状态机。Gold≥50与两阶段双指标≥0.85按每个声明范围执行，独立材料不进入追问／找词／调优，暴露整包转调优。
 
 | 验收项 | 证据场景 |
 |---|---|
