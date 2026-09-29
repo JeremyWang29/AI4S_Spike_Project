@@ -147,3 +147,18 @@ erDiagram
 该示例只说明请求形状，示例UUID不能直接作为测试数据。客户端没有`approved:true`入口；后端在事务中检查权限、目标版本、必要检查报告、评估资格及当前适用性，然后写不可变审批与事件。
 
 <a id="security"></a>
+
+## 22. T1.5 一级分面接口与版本引用
+
+`SearchStrategyTemplateVersion`、`SearchFacetProposalSet`、`SearchStrategyFacetProposal`和`SearchFacetDecisionVersion`的所有者均为 `retrieval`；`ResearchConstraint`仍归 `projects`，`ConceptVersion`仍归 `knowledge`。检索策略分面命名空间与 `analysis.ResearchFacetTemplate` 隔离，禁止共用数据库表或业务通过状态。对象详细字段、许可和状态机见[领域分面与策略模板](./09-领域分面与策略模板.md)。
+
+| 接口语义（实施时固定 OpenAPI 路径） | 写入者／读取者 | 关键前置与响应 |
+| --- | --- | --- |
+| 读取最新领域／分面提案 | `retrieval`只读 | 项目成员权限；返回项目输入指纹、模板版本、建议来源、生成中／可用／降级／待复核状态 |
+| 重新生成或补充提案 | `retrieval` | 幂等键、期望项目 revision、外发许可；先检查本地复用，必要时返回202模型任务 |
+| 逐项确认领域和分面用途 | `retrieval` | 期望提案与项目版本、至少一个核心对象；生成不可变决定版本，不接受客户端伪造来源或审批字段 |
+| 读取当前已确认决定 DTO | `retrieval`供`projects`／`knowledge`／`retrieval`内部消费 | 仅当前适用版本；包括用户自增、用途、来源、模板与权限指纹；待复核不得冒充已确认 |
+| 保存五项范围并确认 | `projects` | 引用决定版本，范围答案由用户另行提交；若决定过期返回409及差异 |
+| 创建检索方案 | `retrieval` | 同时固定范围、分面决定、词表与模板版本；显示任务级组合、变体及语义差异 |
+
+建项事件只触发本地候选，不使原子建项事务等待图谱或模型。读接口不得在 GET 中触发付费模型调用。平台模板发布由受权管理员审核，项目模板升级是新决定版本；关闭或撤回模板时保留历史引用并使当前适用性重新评估。错误响应至少区分无已验收模板、无图谱覆盖、无外发许可、预算不足、版本冲突和任务失败。
