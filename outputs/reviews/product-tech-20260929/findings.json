@@ -1,0 +1,206 @@
+[
+  {
+    "id": "A01",
+    "lens": "adversarial",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/00-总体与模块所有权.md:82；outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:61；outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md:46",
+    "trigger_condition": "检索模块的 SearchEvaluationScope 与评估模块的 RecallEvaluationScopeVersion 都保存平台、集合逻辑和范围，但未定义强制引用关系。",
+    "guard_snippet": "以 SearchEvaluationScope 为范围真值；后者如保留，仅作为固定版本的评估快照，强制引用前者ID、版本及指纹。不得自行改平台、集合树或计数单元；范围变化经原所有者确认并传播失效。",
+    "potential_consequence": "查全分母与查准总体可能各自有效却属于不同范围，仍组合成双85%结论。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A02",
+    "lens": "adversarial",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:57；outputs/research-platform-design-20260907/modules/02-检索方案与执行.md:125",
+    "trigger_condition": "要求在编译前测试词项的实际查准变化和执行耗时，但首次候选查询尚未编译或人工执行。",
+    "guard_snippet": "首次编译只做静态语法、长度、已知约束和已有证据检查，未知收益标为未测；生成候选、人工执行及评估后才能进行实证边际贡献比较。",
+    "potential_consequence": "产生先有执行结果才能生成查询的循环，或用预测收益冒充实测。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A03",
+    "lens": "adversarial",
+    "location": "outputs/research-platform-design-20260907/modules/02-检索方案与执行.md:51；outputs/research-platform-design-20260907/modules/02-检索方案与执行.md:279；outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:168",
+    "trigger_condition": "多个任务联合声明达标时，NOT策略只绑定task_id和基线查询，未规定单任务改式对联合总体的评价。",
+    "guard_snippet": "策略绑定evaluation_scope_ref和完整基线任务包；修改一个任务时固定其他任务，用替换后的整个任务包重算累计ΔR、ΔP，单式独特覆盖另列。",
+    "potential_consequence": "将单式指标与联合基线相减，错误接受无联合收益的改式，或拒绝被其他任务补回覆盖的合理改式。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A04",
+    "lens": "adversarial",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/03-材料与知识.md:11",
+    "trigger_condition": "不同SearchRun或不同项目上传相同内容指纹的文件，规则只写“返回原批次”。",
+    "guard_snippet": "ImportBatch幂等限定项目、SearchRun、用途和命令；不同执行创建独立批次／出现记录，只在授权范围内复用文件和解析产物。",
+    "potential_consequence": "新轮结果挂到旧执行，失去当轮凭据；跨项目复用还可能暴露其他项目的批次信息。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A05",
+    "lens": "adversarial",
+    "location": "outputs/research-platform-design-20260907/modules/04-Gold与检索评估.md:55；outputs/research-platform-design-20260907/modules/04-Gold与检索评估.md:83；outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:63",
+    "trigger_condition": "分页导出和原式补核验跨时段进行，期间数据库更新、历史集合失效或子库权限改变。",
+    "guard_snippet": "固定平台历史集合／会话凭据、执行时间窗、入口权限、过滤条件和各批次时间；补核验须证明与原总体一致。无法证明时新建SearchRun，发生漂移的总体不得拼成完整旧轮。",
+    "potential_consequence": "合成实际从未存在的结果集，把数据库或权限变化误认成检索式优化收益。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A06",
+    "lens": "adversarial",
+    "location": "outputs/research-platform-design-20260907/modules/04-Gold与检索评估.md:9；outputs/research-platform-design-20260907/modules/04-Gold与检索评估.md:82；outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:61",
+    "trigger_condition": "Gold大部分来自待测查询，只混入少量独立来源；现有禁令主要表述为“仅来自当前式的集合”。",
+    "guard_snippet": "按记录保存发现路径和查询祖先，独立验收候选须有不依赖待测查询及其调优链的发现依据；集合混入独立来源不解除其他记录的查询条件化状态。",
+    "potential_consequence": "混合来源即可绕过独立性检查，使查全率估计偏乐观。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A07",
+    "lens": "adversarial",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:63；outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:174；outputs/research-platform-design-20260907/modules/04-Gold与检索评估.md:83",
+    "trigger_condition": "同一记录出现hit与not_indexed，或单次DOI零结果被填为未收录。",
+    "guard_snippet": "收录观察绑定平台、子库、访问范围与执行时点；已核验原式命中证明当时已收录。矛盾观察进入待裁决；制定未收录的充分核验流程，单一标识搜索无结果保留未知。",
+    "potential_consequence": "错误缩小诊断分母，混淆词项漏检与来源覆盖缺口。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A08",
+    "lens": "adversarial",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/06-任务与模型.md:44；outputs/architecture/architecture-ai4s-2026-09-09/modules/03-材料与知识.md:23",
+    "trigger_condition": "独立评审提出材料内指令缺少不可信输入约束。",
+    "guard_snippet": "该发现不成立，不列入整改；现有规则已隔离材料指令并限制模型工具。",
+    "potential_consequence": "原发现担忧提示注入，但不能据此认定当前文档缺少防护。",
+    "disposition": "rejected",
+    "counterevidence": "outputs/architecture/architecture-ai4s-2026-09-09/modules/06-任务与模型.md:52明确规定材料指令不能改变任务、触发工具或获得秘密；outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md:59也明确区分资料指令与系统指令。"
+  },
+  {
+    "id": "A09",
+    "lens": "adversarial",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/03-材料与知识.md:23；outputs/architecture/architecture-ai4s-2026-09-09/modules/04-分析与研究决策.md:25；outputs/research-platform-design-20260907/modules/07-空白与课题决策.md",
+    "trigger_condition": "已引用论文后来撤稿、发布关注声明或关键更正，现有更新主要描述新材料和权限撤回。",
+    "guard_snippet": "材料模块维护版本化来源状态、状态证据和核验时间；人工回传可更新，事件沿依赖使主张、候选和决策包待复核，保留历史并由专家判断影响。",
+    "potential_consequence": "来源已变更，平台仍显示原来的已核查结论；许可撤回流程不能代替科学来源状态管理。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A10",
+    "lens": "adversarial",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/00-总体与模块所有权.md:12；outputs/architecture/architecture-ai4s-2026-09-09/modules/00-总体与模块所有权.md:108；outputs/architecture/architecture-ai4s-2026-09-09/ARCHITECTURE-SPINE.md:35；outputs/research-platform-design-20260907/modules/00-产品总纲.md",
+    "trigger_condition": "总纲流程仍建项后直接进入范围，阶段测试清单仍止于旧场景；架构AD-1仍写产品V0.12优先。",
+    "guard_snippet": "更新现行主流程与架构基线声明；阶段门槛引用当前唯一验收映射，将领域分面、NOT用户阈值和查全流程增量明确纳入M1/M2；历史M0验收单独保留。",
+    "potential_consequence": "新开发按旧流程或旧场景完成即可声称阶段交付，新增规则不进入发布条件。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "A11",
+    "lens": "adversarial",
+    "location": "outputs/research-platform-design-20260907/modules/09-跨模块契约.md:33；outputs/architecture/architecture-ai4s-2026-09-09/modules/06-任务与模型.md:32；outputs/architecture/architecture-ai4s-2026-09-09/modules/06-任务与模型.md:34",
+    "trigger_condition": "产品DomainEvent要求同对象按修订号处理，技术契约明确业务revision不能作为事件顺序游标。",
+    "guard_snippet": "产品交接统一引用stream_id/stream_seq顺序规则，revision只用于并发校验；一事务多事件、过滤订阅与补拉按T06处理。",
+    "potential_consequence": "依产品表实现的消费者可能丢掉共享revision的事件，或把过滤事件误判为缺口。",
+    "disposition": "accepted",
+    "origin": "主评审交叉核验"
+  },
+  {
+    "id": "E01",
+    "lens": "edge-case",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/03-材料与知识.md:11",
+    "trigger_condition": "不同执行轮次或项目上传相同文件指纹。",
+    "guard_snippet": "导入幂等限定project_id＋search_run_id＋用途；跨执行只复用获准解析产物并新建执行来源批次。",
+    "potential_consequence": "返回旧批次混淆执行来源或阻断新总体。",
+    "disposition": "accepted",
+    "overlap_with": "A04"
+  },
+  {
+    "id": "E02",
+    "lens": "edge-case",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:61；outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:174；outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md:46",
+    "trigger_condition": "evaluation新建的范围与retrieval已冻结范围的集合树、平台或计数单元不同。",
+    "guard_snippet": "RecallEvaluationScopeVersion必需引用SearchEvaluationScope版本与指纹，复制字段仅作快照并校验一致。",
+    "potential_consequence": "查全与查准属于不同范围却共同通过。",
+    "disposition": "accepted",
+    "overlap_with": "A01"
+  },
+  {
+    "id": "E03",
+    "lens": "edge-case",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:63；outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:174",
+    "trigger_condition": "同一Gold记录已有原式命中又被提交为平台未收录。",
+    "guard_snippet": "观察绑定子库、权限及执行时点；冲突进入待裁决，不自动覆盖或进入平台内诊断。",
+    "potential_consequence": "有效命中被排出诊断分母。",
+    "disposition": "accepted",
+    "overlap_with": "A07"
+  },
+  {
+    "id": "E04",
+    "lens": "edge-case",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md:105；outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:96",
+    "trigger_condition": "方案未确认或总体不完整，附件定义400/409与recovery_actions，现行T07定义422与recovery_action。",
+    "guard_snippet": "按现有较新正文优先规则使用T07，并将仍属规范的附件改为引用同一错误表；统一状态码与恢复字段的单复数。",
+    "potential_consequence": "单独照附件实施的端点与前端错误处理不一致，维护时反复纠正。",
+    "disposition": "accepted",
+    "qualification": "较新正文优先已能决定采用T07；这是仍需消除的规范重复冲突，不是完全没有优先规则。"
+  },
+  {
+    "id": "E05",
+    "lens": "edge-case",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/01-项目范围.md:13；outputs/architecture/architecture-ai4s-2026-09-09/modules/00-总体与模块所有权.md:81",
+    "trigger_condition": "模型追问完成时T01要求models写ScopeQuestionSuggestion，而所有权表将该对象归projects。",
+    "guard_snippet": "models只返回候选DTO；projects公开命令验证权限、来源、session revision后写ScopeQuestionSuggestion。",
+    "potential_consequence": "模型模块跨模块写表，绕过范围会话的统一校验。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "S01",
+    "lens": "structure",
+    "location": "outputs/research-platform-design-20260907/modules/08-模型调用与成本.md:7",
+    "original_text": "P08的最小技术与数据设计包含Project、检索、导航、图谱、空白等全平台对象字典。",
+    "revised_text": "MOVE／MERGE：业务对象归回P01/P02/P05/P06/P07/P10，对应字段实现归技术契约；P08只保留模型任务、复用、成本并链接对象定义。",
+    "changes": "使models模块不再承担其他模块真值定义；保留全部规则，仅消除确认重复。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "S02",
+    "lens": "structure",
+    "location": "outputs/research-platform-design-20260907/modules/09-跨模块契约.md:7",
+    "original_text": "P09第11.9节全部围绕模型费用基线、增量批处理和低成本路由实施。",
+    "revised_text": "MOVE到P08模型优化实施顺序；P09保留交接引用。",
+    "changes": "同一模型成本主题集中维护，不删实施要求。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "S03",
+    "lens": "structure",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:45；outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:51；outputs/architecture/architecture-ai4s-2026-09-09/modules/02-检索与评估.md:59；outputs/research-platform-design-20260907/modules/04-Gold与检索评估.md:75",
+    "original_text": "正文后按V0.12、T1.6、T1.7持续追加，新旧规则散落。",
+    "revised_text": "MERGE为方案确认、编译检查、执行总体、Gold评估、调优取舍、停止准入的现行业务章节；版本来历移至变更记录，保留旧锚点。",
+    "changes": "读者无需重建版本演变才能确定当前规则，保留状态表和解释。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "S04",
+    "lens": "structure",
+    "location": "outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:100；outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:151；outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:166；outputs/architecture/architecture-ai4s-2026-09-09/modules/07-数据与API契约.md:172；outputs/architecture/architecture-ai4s-2026-09-09/V0.12检索方案技术契约.md:86",
+    "original_text": "API规范分散在主端点表、V0.12附件与尾部三组增量。",
+    "revised_text": "MERGE为完整现行端点索引，每项指向所属模块的唯一命令定义；增量段落保留变更记录。",
+    "changes": "新增守卫可被完整发现，同一接口不再多处定义。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "S05",
+    "lens": "structure",
+    "location": "outputs/research-platform-design-20260907/章节索引.md:5；outputs/architecture/architecture-ai4s-2026-09-09/章节索引.md:5",
+    "original_text": "当前索引首先展示拆分前原行号，新增章节仍按版本另列。",
+    "revised_text": "按模块、业务主题与稳定锚点列出现行索引；原行号移动至历史迁移对照。",
+    "changes": "保留历史追溯，同时让当前阅读入口直接定位有效规则。",
+    "disposition": "accepted"
+  },
+  {
+    "id": "S06",
+    "lens": "structure",
+    "location": "outputs/research-platform-design-20260907/modules/11-验证与验收.md:174；outputs/architecture/architecture-ai4s-2026-09-09/验收与实施映射.md:142",
+    "original_text": "产品和技术验收均在基础表后按版本连续追加。",
+    "revised_text": "MERGE为按稳定场景ID汇总的现行验收目录，列出产品规则、技术模块、测试、证据与实施状态，版本作为属性。",
+    "changes": "研发可以按模块找齐全部验收项，历史场景ID不变。",
+    "disposition": "accepted"
+  }
+]
