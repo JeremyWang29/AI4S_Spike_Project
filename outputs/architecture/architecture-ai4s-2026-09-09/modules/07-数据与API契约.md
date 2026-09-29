@@ -77,6 +77,8 @@ erDiagram
 | SearchStopDecision | evaluation_scope_version、query_bundle_versions、stop_type、actor、decided_at、evaluation_refs、unknown_count、coverage_limitations、reason、next_action；只有validated对应正式检索通过 |
 | DatasetSnapshot | project/source、version、included/excluded_record_ids、dedupe_version、batch_ids、file_fingerprints、license_summary、frozen_by/at；停止决定不自动创建或修改 |
 | AnalysisCapabilityAssessment | dataset_snapshot、capability、status(enabled/blocked/exploratory_only)、field_coverage、sample/time_requirements、normalization/policy/citation/license_checks、blocking_items、recovery_actions、assessed_at |
+| ModelUseCasePolicyVersion | use_case_id、阶段／业务所有者、触发动作、许可输入、规则路径、路由及质量基线、费用上界与预算域、校验／降级、状态与发布版本；仅已验收启用可对正式任务调用真实供应商 |
+| ModelInvocationDecision | use_case_id／策略版、业务对象及输入指纹、actor／授权域、触发命令、decision、reason_code、复用／关联task、估计上界和预算预留引用；零调用也保留决定，实际付费尝试另存ModelCallAttempt |
 | AnalysisRun | 语料ID清单及指纹、字段覆盖、词表／切面／策略版、参数、种子、分母、输入许可、输出位置 |
 | Publication | asset_version、贡献来源、接纳子集指纹、贡献者确认ID及说明指纹、规则版、比较库revision、两类审核、许可版、发布事务ID |
 | RewardLedger | reward_id、用户／目标资产、event_type、effective_at、duration_delta、remaining_seconds、queue_revision、causation_id |
@@ -155,6 +157,8 @@ Gold候选导入／标注／冻结、按原式提交逐条命中核验、提交�
 | POST /rewards/:id/activate；/transfer | entitlements | 目标资产、许可与余量，唯一兑换和FIFO |
 | POST /contributions/:id/withdrawals | assets | 立即停新取用；正式处置追加事件 |
 | GET /tasks/:id；POST /tasks/:id/cancel；/retry | execution | 所有者范围与错误类别；取消不抹账，未知付费不自动重试 |
+| GET /projects/:id/model-usage；GET /model-operations（路径待实施确认） | models／operations | 项目成员查看本项目用量、预留、未知费用与任务状态；运维按角色查看用例汇总、异常和质量趋势，不返回材料正文或受保护标签；读取零模型调用 |
+| POST /model-use-case-policies；POST /model-alerts/:id/acknowledge；/resolve（路径待实施确认） | models／operations | 仅授权管理员可发布已验收用例和预警规则；告警关闭须责任人、原因、复测引用；不能直接改账本、质量结论或正式业务对象 |
 | POST /projects/:id/delete；/restore | operations | 恢复窗口和许可检查；共享贡献不随私人删除自动撤回 |
 | GET /projects/:id/activity；POST /monitor-subscriptions | operations | 版本变化与周期待办；无API不承诺自动检索 |
 | POST /projects/:id/search-plans | retrieval | scope_version、input_snapshot、template_version；201草稿与规则拆分候选；固定范围、分面决定、词表与模板版本，展示任务组配、变体及语义差异；项目授权；新语义任务另建Task |
