@@ -151,8 +151,8 @@ Gold候选导入／标注／冻结、按原式提交逐条命中核验、提交�
 | POST /facet-templates；POST /projects/:id/facets/apply-template；/upgrade-template；/save-as-template | analysis | 个人模板与项目定义独立版本，显式复制／升级，核验个人与项目两种权限 |
 | POST /navigation-runs；GET /navigation-runs/:id | analysis | 正式／预览类型、固定语料、策略；缺字段按面板阻断 |
 | POST /claims/:id/reviews；POST /candidates | knowledge／research | 原文和核查意见；AI草案不能设置已核查 |
-| POST /candidates/:id/followup-plans；/reviews | research | 清单版本、执行材料、指定核查者；与正式检索状态分开 |
-| POST /decision-packages；/:id/reviews | projects | 选定候选、路线、依赖与评审版本 |
+| POST /candidates/:id/followup-plans；/confirm-followup；/decisions；/reviews | research | 清单版本与执行材料；研究者自核查及候选决定须记录actor、对象版本、必需依赖和选择理由；受邀审核另记可选状态，与正式检索状态分开 |
+| POST /decision-packages；/:id/reviews | projects | 研究者选定候选、路线、依赖、决定者及可选评审版本；无专家账号仍可形成符合门槛的正式包，导出分别标研究者确认与专家审核 |
 | POST /contributions；/:id/consents；/:id/reviews；/:id/publish | assets | 最终子集贡献者确认与两类审核，当前库／权限原子重查；资格准备加入发布事务 |
 | POST /rewards/:id/activate；/transfer | entitlements | 目标资产、许可与余量，唯一兑换和FIFO |
 | POST /contributions/:id/withdrawals | assets | 立即停新取用；正式处置追加事件 |
